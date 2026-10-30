@@ -65,7 +65,8 @@
             "useFrameworks": "dynamic"
           }
         }
-      ]
+      ],
+      "./plugins/withoutReleaseLint"
     ],
     "experiments": {
       "typedRoutes": true
