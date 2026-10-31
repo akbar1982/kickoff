@@ -54,9 +54,7 @@
       ],
       [
         "react-native-maps",
-        {
-          "androidGoogleMapsApiKey": "REPLACE_WITH_ANDROID_MAPS_KEY"
-        }
+        {}
       ],
       [
         "expo-build-properties",
