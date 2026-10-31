@@ -65,7 +65,8 @@
             "useFrameworks": "dynamic"
           },
           "android": {
-            "extraProguardRules": "# Stripe's card push provisioning (Google Wallet) isn't used and its classes aren't bundled\n-dontwarn com.stripe.android.pushProvisioning.**"
+            "extraProguardRules": "# Stripe's card push provisioning (Google Wallet) isn't used and its classes aren't bundled\n-dontwarn com.stripe.android.pushProvisioning.**",
+            "enableMinifyInReleaseBuilds": false
           }
         }
       ],
