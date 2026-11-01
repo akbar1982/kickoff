@@ -36,6 +36,7 @@ function Gate() {
       headerTintColor: colors.text,
       headerTitleStyle: { fontWeight: "700" },
       headerShadowVisible: false,
+      headerBackButtonDisplayMode: "minimal",
       contentStyle: { backgroundColor: colors.bg },
     }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
