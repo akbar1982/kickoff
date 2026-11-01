@@ -46,7 +46,7 @@ One React Native (Expo) codebase. Backend on Supabase. Payments through Stripe (
 
    **Webhook:** add a webhook endpoint pointing at the `stripe-webhook` URL, set to listen to events on **Connected accounts**, for `payment_intent.succeeded`, `payment_intent.payment_failed` and `account.updated`. Its signing secret is `STRIPE_CONNECT_WEBHOOK_SECRET`.
 
-   **Optional platform cut:** `supabase secrets set PLATFORM_FEE_PERCENT=5` (default 0). If you set it, update `takeHome()` in `app/create.tsx`, which shows organizers their estimated share.
+   **Platform fee:** Kickoff keeps 5% (min 50¢) of each in-app payment as a Stripe application fee, taken from the organizer's share. Change it in both `supabase/functions/_shared/fee.ts` and `lib/fee.ts`.
 4. **Run**: `npm install`, then `npx expo run:ios` or `npx expo run:android`. Stripe and maps need a development build, so **Expo Go will not work**.
 
 ## Things you still need to do

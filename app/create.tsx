@@ -9,18 +9,18 @@ import { supabase } from "../lib/supabase";
 import { locationPicker } from "../lib/pickerStore";
 import { usePayouts } from "../lib/payments";
 import { formatPrice } from "../lib/hooks";
+import { platformFeeCents, stripeFeeCents } from "../lib/fee";
 import { colors, space, type } from "../lib/theme";
 import type { Group, Place } from "../lib/types";
 
 const MIN_ALLOWED = 2;
 const MAX_ALLOWED = 60;
 
-/** Organizer's share of a price typed as dollars, after Stripe's US card fee (charged to their own Stripe account).
- *  If PLATFORM_FEE_PERCENT is set on the server, subtract that here too. */
+/** Organizer's share of a price typed as dollars, after Stripe's card fee and Kickoff's fee. */
 function takeHome(price: string) {
   const cents = Math.round(parseFloat(price.replace(",", ".")) * 100);
   if (!isFinite(cents) || cents < 100) return null;
-  return cents - (Math.ceil(cents * 0.029) + 30);
+  return cents - stripeFeeCents(cents) - platformFeeCents(cents);
 }
 
 function defaultStart() {
@@ -214,7 +214,7 @@ export default function CreateMatch() {
 
               {method === "stripe" && payouts.ready && takeHome(price) !== null && (
                 <Text style={type.small}>
-                  You receive about {formatPrice(takeHome(price)!)} per player. Stripe's card fee (2.9% + 30¢) comes out of your Stripe account.
+                  You receive about {formatPrice(takeHome(price)!)} per player, after Stripe's card fee (2.9% + 30¢) and Kickoff's fee (5%, min 50¢).
                 </Text>
               )}
               {method === "stripe" && !payouts.ready && (
