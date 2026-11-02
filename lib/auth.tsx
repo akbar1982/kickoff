@@ -13,7 +13,7 @@ interface AuthState {
   session: Session | null;
   loading: boolean;
   role: Role | null;            // null until the profile has loaded
-  signInWithProvider: (p: "google" | "facebook") => Promise<void>;
+  signInWithProvider: (p: "google") => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (name: string, email: string, password: string) => Promise<{ needsConfirmation: boolean }>;

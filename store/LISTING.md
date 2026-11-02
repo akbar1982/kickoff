@@ -166,7 +166,7 @@ Demo account: <email> / <password>
   Reports are reviewed by our admins within 24 hours.
 • Account deletion: Me tab → Delete account.
 • Location is optional and only used to show nearby games and suggest venues.
-• Sign in with Apple is offered alongside Google, Facebook and email.
+• Sign in with Apple is offered alongside Google and email.
 ```
 
 Google's "App access" form: choose **All or some functionality is restricted** and give the same demo login.

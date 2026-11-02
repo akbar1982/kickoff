@@ -13,13 +13,13 @@ export default function Welcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { signInWithProvider, signInWithApple } = useAuth();
-  const [busy, setBusy] = useState<"apple" | "google" | "facebook" | null>(null);
+  const [busy, setBusy] = useState<"apple" | "google" | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
   useEffect(() => {
     if (Platform.OS === "ios") AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
   }, []);
 
-  const social = async (p: "apple" | "google" | "facebook") => {
+  const social = async (p: "apple" | "google") => {
     if (busy) return;
     setBusy(p);
     try { await (p === "apple" ? signInWithApple() : signInWithProvider(p)); }
@@ -51,8 +51,6 @@ export default function Welcome() {
         )}
         <Button title="Continue with Google" icon="logo-google" variant="secondary"
           loading={busy === "google"} onPress={() => social("google")} />
-        <Button title="Continue with Facebook" icon="logo-facebook" variant="secondary"
-          loading={busy === "facebook"} onPress={() => social("facebook")} />
         <View style={{ flexDirection: "row", alignItems: "center", marginVertical: space.sm }}>
           <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
           <Text style={[type.small, { marginHorizontal: space.md }]}>or</Text>

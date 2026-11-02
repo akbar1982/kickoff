@@ -6,7 +6,7 @@ One React Native (Expo) codebase. Backend on Supabase. Payments through Stripe (
 
 | Feature | Where |
 |---|---|
-| Sign up with Google, Facebook, or email + password | `app/(auth)/*`, `lib/auth.tsx` |
+| Sign up with Apple, Google, or email + password | `app/(auth)/*`, `lib/auth.tsx` |
 | Games feed (soonest first, distance shown), live spot counts | `app/(tabs)/index.tsx` |
 | Map of nearby games | `app/(tabs)/map.tsx` |
 | Host a game: venue search or drop-a-pin, date/time, **min and max players**, free or paid | `app/(tabs)/create.tsx`, `app/pick-location.tsx` |
@@ -33,7 +33,7 @@ One React Native (Expo) codebase. Backend on Supabase. Payments through Stripe (
    update public.profiles set role = 'admin'
    where id = (select id from auth.users where email = 'you@example.com');
    ```
-   After that, admins manage others from **Me → Manage users**. Group organizers are set inside each group, not here. Under Authentication → Providers enable Google and Facebook, and add `kickoff://auth-callback` to the redirect URLs.
+   After that, admins manage others from **Me → Manage users**. Group organizers are set inside each group, not here. Under Authentication → Providers enable Google and Apple, and add `kickoff://auth-callback` to the redirect URLs.
 2. **Keys**: copy `.env.example` to `.env` and fill it in. Put Google Maps keys in `app.json` (`ios.config.googleMapsApiKey`, `android.config.googleMaps.apiKey`). Enable "Maps SDK" and "Places API (New)" in Google Cloud.
 3. **Edge functions** (Supabase CLI):
    ```
@@ -52,7 +52,7 @@ One React Native (Expo) codebase. Backend on Supabase. Payments through Stripe (
 ## Things you still need to do
 
 - **Venmo** (hidden: `VENMO_ENABLED` in `app/match/[id]/checkout.tsx`): Braintree pays into the platform's account, not the organizer's, so it doesn't fit the payout model as is. Stripe doesn't offer Venmo, so it goes through Braintree. Braintree has no maintained Expo package, so `getVenmoNonce()` in `lib/payments.ts` is a stub that throws a clear message. Connect it to a native Braintree module (or a WebView running Braintree's Venmo JS component). The server side (`venmo-token`, `venmo-checkout`) is written.
-- **Sign in with Apple**: Apple's App Store rules require it on iOS when you offer Google or Facebook sign-in. Add it before submitting.
+- **Sign in with Apple**: Apple's App Store rules require it on iOS when you offer Google sign-in. Already added.
 - **Refunds**: leaving or being removed from a paid game doesn't refund automatically. For in-app payments organizers refund from their own Stripe dashboard (the money comes from their balance); for direct payments they refund the player themselves.
 - **Expired holds**: an unpaid hold stops counting after 15 minutes. A scheduled job to delete old `pending_payment` rows and promote the waitlist would tidy this further.
 - Bundle ID and Android package: `com.akbar.soccer`; Apple Pay merchant ID: `merchant.com.akbar.soccer` (register both in the Apple Developer portal). Replace the placeholder icon/splash.
