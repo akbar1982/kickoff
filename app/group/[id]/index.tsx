@@ -6,6 +6,7 @@ import { Button, Card, Chip } from "../../../components/ui";
 import { MatchCard } from "../../../components/MatchCard";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
+import { upcomingThenPast } from "../../../lib/hooks";
 import { colors, space, type } from "../../../lib/theme";
 import type { Group, Match } from "../../../lib/types";
 
@@ -22,7 +23,7 @@ export default function GroupDetail() {
     const [g, m] = await Promise.all([
       supabase.from("group_overview").select("*").eq("id", id).single(),
       supabase.from("match_overview").select("*").eq("group_id", id).eq("status", "open")
-        .gte("starts_at", new Date().toISOString()).order("starts_at"),
+        .gte("starts_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order("starts_at"),
     ]);
     if (g.error) { Alert.alert("Couldn't load group", g.error.message); return; }
     setGroup(g.data as Group);
@@ -55,6 +56,7 @@ export default function GroupDetail() {
   const member = group.my_status === "active";
   const organizer = member && group.my_group_role === "organizer";
   const admin = role === "admin";
+  const { upcoming, past } = upcomingThenPast(games);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: space.md, paddingBottom: space.xl }}>
@@ -98,12 +100,14 @@ export default function GroupDetail() {
 
       {/* ── Games ── */}
       <Text style={[type.title, { marginTop: space.xl, marginBottom: space.sm }]}>Upcoming games</Text>
-      {games.length === 0 && (
+      {upcoming.length === 0 && (
         <Text style={type.small}>
           {member || admin ? "No games posted yet." : "Join the group to see its members-only games."}
         </Text>
       )}
-      {games.map((m) => <MatchCard key={m.id} match={m} />)}
+      {upcoming.map((m) => <MatchCard key={m.id} match={m} />)}
+      {past.length > 0 && <Text style={[type.title, { marginTop: space.lg, marginBottom: space.sm }]}>Past games</Text>}
+      {past.map((m) => <MatchCard key={m.id} match={m} />)}
 
       {/* ── Leave / delete ── */}
       <View style={{ marginTop: space.xl, gap: space.sm }}>

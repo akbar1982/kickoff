@@ -4,11 +4,11 @@ import MapView, { Callout, Marker } from "react-native-maps";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../components/ui";
-import { formatPrice, formatWhen, headcountLabel, useUpcomingMatches, useUserLocation } from "../../lib/hooks";
+import { formatPrice, formatWhen, headcountLabel, isPast, useMatches, useUserLocation } from "../../lib/hooks";
 import { colors, space, type } from "../../lib/theme";
 
 export default function MapTab() {
-  const { matches } = useUpcomingMatches();
+  const { matches } = useMatches();
   const { coords } = useUserLocation();
   const router = useRouter();
 
@@ -23,14 +23,14 @@ export default function MapTab() {
         {matches.map((m) => (
           <Marker key={m.id} coordinate={{ latitude: m.lat, longitude: m.lng }}
             onCalloutPress={() => router.push({ pathname: "/match/[id]", params: { id: m.id } })}>
-            <View style={[styles.pin, { backgroundColor: m.is_confirmed ? colors.accent : colors.warning }]}>
+            <View style={[styles.pin, { backgroundColor: isPast(m) ? colors.muted : m.is_confirmed ? colors.accent : colors.warning, opacity: isPast(m) ? 0.6 : 1 }]}>
               <Ionicons name="football" size={16} color={colors.accentInk} />
             </View>
             <Callout tooltip>
               <View style={styles.callout}>
                 <Text style={type.small}>{formatWhen(m.starts_at)}</Text>
                 <Text style={[type.body, { fontWeight: "700" }]} numberOfLines={1}>{m.title}</Text>
-                <Text style={type.small}>{headcountLabel(m).text} · {formatPrice(m.price_cents, m.currency)}</Text>
+                <Text style={type.small}>{isPast(m) ? "Played" : headcountLabel(m).text} · {formatPrice(m.price_cents, m.currency)}</Text>
                 <Text style={[type.small, { color: colors.accent, marginTop: 4 }]}>Tap for details</Text>
               </View>
             </Callout>

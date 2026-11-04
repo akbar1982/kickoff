@@ -3,16 +3,17 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Card, Chip, PlayerMeter } from "./ui";
-import { formatPrice, formatWhen, headcountLabel } from "../lib/hooks";
+import { formatPrice, formatWhen, headcountLabel, isPast } from "../lib/hooks";
 import { colors, space, type } from "../lib/theme";
 import type { Match } from "../lib/types";
 
 export function MatchCard({ match, distanceKm }: { match: Match; distanceKm?: number }) {
   const router = useRouter();
   const head = headcountLabel(match);
+  const past = isPast(match);
   return (
     <Pressable onPress={() => router.push({ pathname: "/match/[id]", params: { id: match.id } })}
-      style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1, marginBottom: space.md })}>
+      style={({ pressed }) => ({ opacity: (past ? 0.5 : 1) * (pressed ? 0.9 : 1), marginBottom: space.md })}>
       <Card>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1, paddingRight: space.sm }}>
@@ -33,7 +34,9 @@ export function MatchCard({ match, distanceKm }: { match: Match; distanceKm?: nu
           <PlayerMeter going={match.going_count} min={match.min_players} max={match.max_players} />
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: space.md }}>
-          <Chip label={head.text} tone={head.tone} icon={match.is_confirmed ? "checkmark-circle" : "people"} />
+          {past
+            ? <Chip label={`Played · ${match.going_count} players`} icon="time" />
+            : <Chip label={head.text} tone={head.tone} icon={match.is_confirmed ? "checkmark-circle" : "people"} />}
           {match.group_name && <Chip label={match.group_name} icon="shield" />}
           {match.visibility === "group" && <Chip label="Members only" icon="lock-closed" />}
         </View>

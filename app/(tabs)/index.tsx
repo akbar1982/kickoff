@@ -2,25 +2,28 @@ import React, { useMemo, useState } from "react";
 import { FlatList, RefreshControl, Text, View } from "react-native";
 import { Screen } from "../../components/ui";
 import { MatchCard } from "../../components/MatchCard";
-import { useUpcomingMatches, useUserLocation } from "../../lib/hooks";
+import { upcomingThenPast, useMatches, useUserLocation } from "../../lib/hooks";
 import { distanceKm } from "../../lib/places";
 import { colors, space, type } from "../../lib/theme";
 
 export default function Feed() {
-  const { matches, loading, error, reload } = useUpcomingMatches();
+  const { matches, loading, error, reload } = useMatches();
   const { coords, granted } = useUserLocation();
   const [refreshing, setRefreshing] = useState(false);
 
   const sorted = useMemo(() => {
-    const withDist = matches.map((m) => ({ m, d: distanceKm(coords, { lat: m.lat, lng: m.lng }) }));
+    const dist = (m: (typeof matches)[number]) => distanceKm(coords, { lat: m.lat, lng: m.lng });
+    const { upcoming, past } = upcomingThenPast(matches);
     // soonest first; distance is shown, and used only as a tiebreaker for same-start games
-    return withDist.sort((a, b) => +new Date(a.m.starts_at) - +new Date(b.m.starts_at) || a.d - b.d);
+    const soon = upcoming.map((m) => ({ m, d: dist(m) }))
+      .sort((a, b) => +new Date(a.m.starts_at) - +new Date(b.m.starts_at) || a.d - b.d);
+    return { items: [...soon, ...past.map((m) => ({ m, d: dist(m) }))], firstPast: past[0]?.id };
   }, [matches, coords]);
 
   return (
     <Screen>
       <FlatList
-        data={sorted}
+        data={sorted.items}
         keyExtractor={(x) => x.m.id}
         contentContainerStyle={{ padding: space.md, paddingBottom: space.xl }}
         refreshControl={
@@ -32,7 +35,12 @@ export default function Feed() {
             {granted ? "Games near you" : "Enable location to see distances"}
           </Text>
         }
-        renderItem={({ item }) => <MatchCard match={item.m} distanceKm={granted ? item.d : undefined} />}
+        renderItem={({ item }) => (
+          <>
+            {item.m.id === sorted.firstPast && <Text style={[type.label, { marginTop: space.md, marginBottom: space.sm }]}>Past games</Text>}
+            <MatchCard match={item.m} distanceKm={granted ? item.d : undefined} />
+          </>
+        )}
         ListEmptyComponent={
           <View style={{ alignItems: "center", marginTop: 80 }}>
             <Text style={type.title}>{loading ? "Loading games…" : error ? "Couldn't load games" : "No games yet"}</Text>

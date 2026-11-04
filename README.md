@@ -16,6 +16,7 @@ One React Native (Expo) codebase. Backend on Supabase. Payments through Stripe (
 | Games are posted by a group's organizers, either open to everyone or members only | `app/create.tsx` |
 | App-wide admins moderate: cancel any game, delete any message, manage users | `app/admin.tsx` |
 | Chat: community (everyone), per group (members), per game (host and players) | `components/ChatRoom.tsx`, `app/(tabs)/chat.tsx` |
+| Past games: greyed out for everyone for a day after kickoff, then visible only to the organizer, deleted after 30 days by a nightly `pg_cron` job | `supabase/007_past_games.sql`, `isPast()` in `lib/hooks.ts` |
 | Store requirements: delete account (Me tab), report and block in chat, admin Reports screen, Sign in with Apple, links to the `site/` legal pages (`EXPO_PUBLIC_SITE_URL`) | `supabase/006_safety.sql`, `supabase/functions/delete-account`, `lib/safety.ts`, `app/reports.tsx`, `app/blocked.tsx`, `site/` |
 | Paid games, two ways: **in the app** (card/Apple Pay/Google Pay, charged on the host's own Stripe account, so Stripe's fee is theirs and the platform pays no Connect fees) or **pay the organizer directly** (Venmo/Zelle/cash; organizers mark players paid) | `supabase/004_payouts.sql`, `supabase/005_payment_options.sql`, `supabase/functions/stripe-*`, `app/create.tsx` |
 | Paid games: 15 minute spot hold, checkout, server-confirmed payment | `app/match/[id]/checkout.tsx`, `supabase/functions/*` |
@@ -28,7 +29,7 @@ One React Native (Expo) codebase. Backend on Supabase. Payments through Stripe (
 
 ## Setup
 
-1. **Supabase**: create a project, run `supabase/schema.sql`, `supabase/002_roles_and_chat.sql` and `supabase/003_groups.sql`, `supabase/004_payouts.sql`, `supabase/005_payment_options.sql` and `supabase/006_safety.sql` in that order in the SQL editor. Everyone starts as a regular user; make yourself the first admin in the SQL editor:
+1. **Supabase**: create a project, run `supabase/schema.sql`, `supabase/002_roles_and_chat.sql` and `supabase/003_groups.sql`, `supabase/004_payouts.sql`, `supabase/005_payment_options.sql`, `supabase/006_safety.sql` and `supabase/007_past_games.sql` in that order in the SQL editor. Everyone starts as a regular user; make yourself the first admin in the SQL editor:
    ```sql
    update public.profiles set role = 'admin'
    where id = (select id from auth.users where email = 'you@example.com');

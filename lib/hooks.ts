@@ -4,6 +4,19 @@ import { freshChannel, supabase } from "./supabase";
 import type { Match } from "./types";
 
 export type Coords = { lat: number; lng: number };
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A game counts as past once it has started. Everyone sees it greyed out for a day;
+ *  after that only its organizer does, for 30 days (enforced by the database). */
+export const isPast = (m: { starts_at: string }) => +new Date(m.starts_at) <= Date.now();
+
+/** Upcoming games soonest first, then past games most recent first. */
+export function upcomingThenPast<T extends { starts_at: string }>(list: T[]) {
+  const upcoming = list.filter((m) => !isPast(m));
+  const past = list.filter(isPast).sort((a, b) => +new Date(b.starts_at) - +new Date(a.starts_at));
+  return { upcoming, past };
+}
+
 const FALLBACK: Coords = { lat: 40.2206, lng: -74.7597 }; // used until/unless location permission is granted
 
 export function useUserLocation() {
@@ -21,7 +34,8 @@ export function useUserLocation() {
   return { coords, granted };
 }
 
-export function useUpcomingMatches() {
+/** Open games from the last 30 days on; which past ones you get back depends on whether you host them. */
+export function useMatches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +45,7 @@ export function useUpcomingMatches() {
       .from("match_overview")
       .select("*")
       .eq("status", "open")
-      .gte("starts_at", new Date().toISOString())
+      .gte("starts_at", new Date(Date.now() - 30 * DAY_MS).toISOString())
       .order("starts_at", { ascending: true });
     if (error) setError(error.message);
     else { setMatches(data as Match[]); setError(null); }

@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button, Card, Chip, PlayerMeter } from "../../../components/ui";
 import { freshChannel, supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
-import { formatPrice, formatWhen, headcountLabel } from "../../../lib/hooks";
+import { formatPrice, formatWhen, headcountLabel, isPast } from "../../../lib/hooks";
 import { colors, radius, space, type } from "../../../lib/theme";
 import type { Match, Poll, Rsvp } from "../../../lib/types";
 
@@ -139,7 +139,7 @@ export default function MatchDetail() {
   };
 
   const cta = useMemo(() => {
-    if (!match || match.status !== "open") return null;
+    if (!match || match.status !== "open" || isPast(match)) return null;
     if (isHost) return null;
     if (!myRsvp) return { title: match.spots_left === 0 ? "Join waitlist" : match.price_cents > 0 ? `Join · ${formatPrice(match.price_cents, match.currency)}` : "Join game", onPress: join };
     if (myRsvp.status === "pending_payment") return { title: "Complete payment", onPress: () => router.push({ pathname: "/match/[id]/checkout", params: { id } }) };
@@ -149,12 +149,15 @@ export default function MatchDetail() {
   if (!match) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
   const head = headcountLabel(match);
   const cancelled = match.status === "cancelled";
+  const ended = isPast(match);
+  const open = match.status === "open" && !ended;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: "" }} />
       <ScrollView contentContainerStyle={{ padding: space.md, paddingBottom: 140 }}>
         {cancelled && <View style={{ marginBottom: space.md }}><Chip label="This game was cancelled" tone="warn" icon="close-circle" /></View>}
+        {ended && !cancelled && <View style={{ marginBottom: space.md }}><Chip label="This game has been played" icon="time" /></View>}
         <Text style={type.small}>{formatWhen(match.starts_at)} · {match.duration_min} min</Text>
         <Text style={[type.display, { fontSize: 30, marginTop: 4 }]}>{match.title}</Text>
         <Text style={[type.small, { marginTop: 4 }]}>
@@ -223,7 +226,7 @@ export default function MatchDetail() {
         {/* ── Votes ── */}
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: space.xl, marginBottom: space.sm }}>
           <Text style={type.title}>Votes</Text>
-          {(isHost || myRsvp?.status === "going") && !cancelled && (
+          {(isHost || myRsvp?.status === "going") && open && (
             <Pressable onPress={() => router.push({ pathname: "/match/[id]/new-poll", params: { id } })} hitSlop={10}>
               <Text style={{ color: colors.accent, fontWeight: "700" }}>+ New vote</Text>
             </Pressable>
@@ -302,8 +305,8 @@ export default function MatchDetail() {
 
         {/* ── Secondary actions ── */}
         <View style={{ marginTop: space.xl }}>
-          {myRsvp && !isHost && match.status === "open" && <Button title="Leave game" variant="danger" onPress={leave} />}
-          {canManage && match.status === "open" && <Button title="Cancel game" variant="danger" onPress={cancelMatch} />}
+          {myRsvp && !isHost && open && <Button title="Leave game" variant="danger" onPress={leave} />}
+          {canManage && open && <Button title="Cancel game" variant="danger" onPress={cancelMatch} />}
         </View>
       </ScrollView>
 
