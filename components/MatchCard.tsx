@@ -7,14 +7,15 @@ import { formatPrice, formatWhen, headcountLabel, isPast } from "../lib/hooks";
 import { colors, space, type } from "../lib/theme";
 import type { Match } from "../lib/types";
 
-export function MatchCard({ match, distanceKm }: { match: Match; distanceKm?: number }) {
+/** `fill` stretches the card to its grid cell, so cards in one row line up. */
+export function MatchCard({ match, distanceKm, fill }: { match: Match; distanceKm?: number; fill?: boolean }) {
   const router = useRouter();
   const head = headcountLabel(match);
   const past = isPast(match);
   return (
     <Pressable onPress={() => router.push({ pathname: "/match/[id]", params: { id: match.id } })}
-      style={({ pressed }) => ({ opacity: (past ? 0.5 : 1) * (pressed ? 0.9 : 1), marginBottom: space.md })}>
-      <Card>
+      style={({ pressed }) => ({ opacity: (past ? 0.5 : 1) * (pressed ? 0.9 : 1), marginBottom: space.md, flex: fill ? 1 : undefined })}>
+      <Card style={fill ? { flex: 1 } : undefined}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1, paddingRight: space.sm }}>
             <Text style={type.small}>{formatWhen(match.starts_at)}</Text>
@@ -35,7 +36,7 @@ export function MatchCard({ match, distanceKm }: { match: Match; distanceKm?: nu
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: space.md }}>
           {past
-            ? <Chip label={`Played · ${match.going_count} players`} icon="time" />
+            ? <Chip label={`Played · ${match.going_count} player${match.going_count === 1 ? "" : "s"}`} icon="time" />
             : <Chip label={head.text} tone={head.tone} icon={match.is_confirmed ? "checkmark-circle" : "people"} />}
           {match.group_name && <Chip label={match.group_name} icon="shield" />}
           {match.visibility === "group" && <Chip label="Members only" icon="lock-closed" />}

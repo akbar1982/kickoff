@@ -11,6 +11,7 @@ import { usePayouts } from "../lib/payments";
 import { formatPrice } from "../lib/hooks";
 import { platformFeeCents, stripeFeeCents } from "../lib/fee";
 import { colors, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 import type { Group, Place } from "../lib/types";
 
 const MIN_ALLOWED = 2;
@@ -114,7 +115,7 @@ export default function CreateMatch() {
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", padding: space.lg }}>
         <Ionicons name="people-outline" size={40} color={colors.muted} />
         <Text style={[type.title, { marginTop: space.md }]}>Start a group first</Text>
-        <Text style={[type.small, { marginTop: space.sm, marginBottom: space.lg, textAlign: "center" }]}>
+        <Text style={[type.small, { marginTop: space.sm, marginBottom: space.lg, textAlign: "center", maxWidth: 420 }]}>
           Games are posted by group organizers. Start your own group and you'll be its organizer.
         </Text>
         <Button title="Start a group" icon="add" onPress={() => router.replace("/group/new")} />
@@ -124,7 +125,7 @@ export default function CreateMatch() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: space.md, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.md, paddingBottom: 120 }, column(widths.form)]} keyboardShouldPersistTaps="handled">
         <Text style={[type.label, { marginBottom: 6 }]}>Group</Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: errors.group ? 4 : space.md }}>
           {(groups ?? []).map((g) => {

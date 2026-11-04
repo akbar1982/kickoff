@@ -8,10 +8,12 @@ import { Button, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { openLegal } from "../../lib/safety";
 import { colors, space, type } from "../../lib/theme";
+import { useLayout } from "../../lib/layout";
 
 export default function Welcome() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { wide, landscape } = useLayout();
   const { signInWithProvider, signInWithApple } = useAuth();
   const [busy, setBusy] = useState<"apple" | "google" | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
@@ -27,44 +29,75 @@ export default function Welcome() {
     finally { setBusy(null); }
   };
 
-  return (
-    <Screen style={{ paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.lg, paddingHorizontal: space.lg }}>
-      <View style={{ flex: 1, justifyContent: "center" }}>
-        <View style={{
-          width: 72, height: 72, borderRadius: 22, backgroundColor: colors.accent,
-          alignItems: "center", justifyContent: "center", marginBottom: space.lg,
-        }}>
-          <Ionicons name="football" size={40} color={colors.accentInk} />
-        </View>
-        <Text style={type.display}>Kickoff</Text>
-        <Text style={[type.body, { color: colors.muted, marginTop: space.sm, fontSize: 18, lineHeight: 26 }]}>
-          Find pickup soccer nearby. Set the time, lock the squad, play.
-        </Text>
+  // Phones: brand on top, buttons at the bottom. iPad: both centred as one block, or side by side in landscape.
+  const brand = (
+    <View style={wide && !landscape ? { alignItems: "center" } : undefined}>
+      <View style={{
+        width: wide ? 96 : 72, height: wide ? 96 : 72, borderRadius: wide ? 28 : 22, backgroundColor: colors.accent,
+        alignItems: "center", justifyContent: "center", marginBottom: space.lg,
+      }}>
+        <Ionicons name="football" size={wide ? 54 : 40} color={colors.accentInk} />
       </View>
+      <Text style={[type.display, wide && { fontSize: 48, letterSpacing: -1.2 }]}>Kickoff</Text>
+      <Text style={[type.body, { color: colors.muted, marginTop: space.sm, fontSize: wide ? 21 : 18, lineHeight: wide ? 30 : 26 },
+        wide && !landscape && { textAlign: "center", maxWidth: 460 }]}>
+        Find pickup soccer nearby. Set the time, lock the squad, play.
+      </Text>
+    </View>
+  );
 
-      <View style={{ gap: space.sm + 4 }}>
-        {appleAvailable && (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-            cornerRadius={27} style={{ height: 54 }} onPress={() => social("apple")} />
-        )}
-        <Button title="Continue with Google" icon="logo-google" variant="secondary"
-          loading={busy === "google"} onPress={() => social("google")} />
-        <View style={{ flexDirection: "row", alignItems: "center", marginVertical: space.sm }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-          <Text style={[type.small, { marginHorizontal: space.md }]}>or</Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        </View>
-        <Button title="Create account with email" onPress={() => router.push("/(auth)/sign-up")} />
-        <Button title="I already have an account" variant="ghost" onPress={() => router.push("/(auth)/sign-in")} />
-        <Text style={[type.small, { textAlign: "center", fontSize: 12 }]}>
-          By continuing, you agree to our{" "}
-          <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("terms")}>Terms</Text>
-          {" "}and{" "}
-          <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("privacy")}>Privacy Policy</Text>.
-        </Text>
+  const actions = (
+    <View style={{ gap: space.sm + 4 }}>
+      {appleAvailable && (
+        <AppleAuthentication.AppleAuthenticationButton
+          buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+          cornerRadius={27} style={{ height: 54 }} onPress={() => social("apple")} />
+      )}
+      <Button title="Continue with Google" icon="logo-google" variant="secondary"
+        loading={busy === "google"} onPress={() => social("google")} />
+      <View style={{ flexDirection: "row", alignItems: "center", marginVertical: space.sm }}>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+        <Text style={[type.small, { marginHorizontal: space.md }]}>or</Text>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
       </View>
+      <Button title="Create account with email" onPress={() => router.push("/(auth)/sign-up")} />
+      <Button title="I already have an account" variant="ghost" onPress={() => router.push("/(auth)/sign-in")} />
+      <Text style={[type.small, { textAlign: "center", fontSize: 12 }]}>
+        By continuing, you agree to our{" "}
+        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("terms")}>Terms</Text>
+        {" "}and{" "}
+        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("privacy")}>Privacy Policy</Text>.
+      </Text>
+    </View>
+  );
+
+  const pad = { paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.lg, paddingHorizontal: space.lg };
+
+  if (wide && landscape) {
+    return (
+      <Screen style={[pad, { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 96 }]}>
+        <View style={{ flex: 1, maxWidth: 440 }}>{brand}</View>
+        <View style={{ flex: 1, maxWidth: 420 }}>{actions}</View>
+      </Screen>
+    );
+  }
+
+  if (wide) {
+    return (
+      <Screen style={[pad, { justifyContent: "center", alignItems: "center" }]}>
+        <View style={{ width: "100%", maxWidth: 440, gap: 64 }}>
+          {brand}
+          {actions}
+        </View>
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen style={pad}>
+      <View style={{ flex: 1, justifyContent: "center" }}>{brand}</View>
+      {actions}
     </Screen>
   );
 }

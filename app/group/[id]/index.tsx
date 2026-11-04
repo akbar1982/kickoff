@@ -8,6 +8,7 @@ import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { upcomingThenPast } from "../../../lib/hooks";
 import { colors, space, type } from "../../../lib/theme";
+import { column, widths } from "../../../lib/layout";
 import type { Group, Match } from "../../../lib/types";
 
 export default function GroupDetail() {
@@ -59,7 +60,7 @@ export default function GroupDetail() {
   const { upcoming, past } = upcomingThenPast(games);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: space.md, paddingBottom: space.xl }}>
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[{ padding: space.md, paddingBottom: space.xl }, column(widths.page)]}>
       <Stack.Screen options={{ title: "" }} />
       <Text style={type.display}>{group.name}</Text>
       <View style={{ flexDirection: "row", gap: 8, marginTop: space.sm }}>

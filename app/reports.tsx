@@ -7,6 +7,7 @@ import { useAuth } from "../lib/auth";
 import { deleteAccount } from "../lib/safety";
 import { formatWhen } from "../lib/hooks";
 import { colors, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 
 interface Report {
   id: string; reason: string; message_id: string | null; message_body: string | null;
@@ -80,9 +81,9 @@ export default function Reports() {
   }
 
   return (
-    <FlatList
+    <FlatList showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: space.md }}
+      contentContainerStyle={[{ padding: space.md }, column(widths.page)]}
       data={reports ?? []}
       keyExtractor={(r) => r.id}
       onRefresh={load}

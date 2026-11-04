@@ -8,6 +8,7 @@ import { useUserLocation } from "../lib/hooks";
 import { describePin, searchPlaces } from "../lib/places";
 import { locationPicker } from "../lib/pickerStore";
 import { colors, radius, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 import type { Place } from "../lib/types";
 
 export default function PickLocation() {
@@ -82,7 +83,7 @@ export default function PickLocation() {
           {searching && <Text style={type.small}>…</Text>}
         </View>
         {results.length > 0 && (
-          <FlatList
+          <FlatList showsVerticalScrollIndicator={false}
             style={styles.results}
             keyboardShouldPersistTaps="handled"
             data={results}
@@ -101,7 +102,7 @@ export default function PickLocation() {
       </View>
 
       <View style={styles.footer}>
-        <Button title="Use this spot" onPress={usePin} />
+        <Button title="Use this spot" onPress={usePin} style={column(widths.form)} />
       </View>
     </Screen>
   );
@@ -109,14 +110,14 @@ export default function PickLocation() {
 
 const styles = StyleSheet.create({
   pinWrap: { ...(StyleSheet.absoluteFill as object), alignItems: "center", justifyContent: "center" },
-  searchWrap: { position: "absolute", top: space.md, left: space.md, right: space.md },
+  searchWrap: { position: "absolute", top: space.md, left: space.md, right: space.md, alignItems: "center" },
   searchBox: {
-    flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: radius.pill,
+    width: "100%", maxWidth: widths.form, flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: radius.pill,
     borderWidth: 1, borderColor: colors.border, paddingHorizontal: space.md, height: 50,
   },
   searchInput: { flex: 1, color: colors.text, marginLeft: space.sm, fontSize: 15 },
   results: {
-    marginTop: space.sm, backgroundColor: colors.surface, borderRadius: radius.lg, maxHeight: 280,
+    width: "100%", maxWidth: widths.form, marginTop: space.sm, backgroundColor: colors.surface, borderRadius: radius.lg, maxHeight: 280,
     borderWidth: 1, borderColor: colors.border,
   },
   row: { flexDirection: "row", alignItems: "center", padding: space.md, borderBottomWidth: 1, borderBottomColor: colors.border },

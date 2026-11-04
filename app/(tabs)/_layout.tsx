@@ -2,7 +2,7 @@ import React from "react";
 import { Pressable } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, readable } from "../../lib/theme";
+import { colors } from "../../lib/theme";
 
 type Icon = React.ComponentProps<typeof Ionicons>["name"];
 const tab = (focused: Icon, idle: Icon) => ({ color, focused: f, size }: { color: any; focused: boolean; size: number }) =>
@@ -20,7 +20,7 @@ export default function TabsLayout() {
       tabBarActiveTintColor: colors.accent,
       tabBarInactiveTintColor: colors.muted,
       tabBarLabelStyle: { fontWeight: "600", fontSize: 11 },
-      sceneStyle: [{ backgroundColor: colors.bg }, readable],
+      sceneStyle: { backgroundColor: colors.bg },
     }}>
       <Tabs.Screen name="index" options={{
         title: "Games", tabBarIcon: tab("football", "football-outline"),
@@ -30,7 +30,7 @@ export default function TabsLayout() {
           </Pressable>
         ),
       }} />
-      <Tabs.Screen name="map" options={{ title: "Map", headerShown: false, sceneStyle: { backgroundColor: colors.bg }, tabBarIcon: tab("map", "map-outline") }} />
+      <Tabs.Screen name="map" options={{ title: "Map", headerShown: false, tabBarIcon: tab("map", "map-outline") }} />
       <Tabs.Screen name="groups" options={{ title: "Groups", tabBarIcon: tab("people", "people-outline") }} />
       <Tabs.Screen name="chat" options={{ title: "Chat", tabBarIcon: tab("chatbubbles", "chatbubbles-outline") }} />
       <Tabs.Screen name="profile" options={{ title: "Me", tabBarIcon: tab("person", "person-outline") }} />

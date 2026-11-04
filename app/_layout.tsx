@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActionSheetHost } from "../components/ActionSheet";
 import { AuthProvider, useAuth } from "../lib/auth";
-import { colors, readable } from "../lib/theme";
+import { colors } from "../lib/theme";
 
 // dark navigator background, so the space beside the content column on iPad matches the app
 const navTheme = {
@@ -29,6 +29,7 @@ function Gate() {
   }, [session, loading, segments]);
 
 
+
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
@@ -44,10 +45,10 @@ function Gate() {
       headerTitleStyle: { fontWeight: "700" },
       headerShadowVisible: false,
       headerBackButtonDisplayMode: "minimal",
-      contentStyle: [{ backgroundColor: colors.bg }, readable],
+      contentStyle: { backgroundColor: colors.bg },
     }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="match/[id]/index" options={{ title: "" }} />
       <Stack.Screen name="match/[id]/checkout" options={{ title: "Checkout", presentation: "modal" }} />
       <Stack.Screen name="match/[id]/chat" options={{ title: "Game chat" }} />

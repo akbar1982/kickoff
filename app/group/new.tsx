@@ -5,6 +5,7 @@ import { Button, Field } from "../../components/ui";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { colors, space, type } from "../../lib/theme";
+import { column, widths } from "../../lib/layout";
 
 export default function NewGroup() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function NewGroup() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: space.md }} keyboardShouldPersistTaps="handled">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.md }, column(widths.form)]} keyboardShouldPersistTaps="handled">
         <Text style={[type.small, { marginBottom: space.lg }]}>
           You'll be the group's organizer. You can invite players, approve join requests, post games, and make others organizers too.
         </Text>

@@ -5,6 +5,7 @@ import { Button, Card } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import { unblock } from "../lib/safety";
 import { colors, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 
 interface Blocked { blocked_id: string; profiles: { display_name: string } | null }
 
@@ -29,9 +30,9 @@ export default function BlockedUsers() {
   };
 
   return (
-    <FlatList
+    <FlatList showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: space.md }}
+      contentContainerStyle={[{ padding: space.md }, column(widths.page)]}
       data={rows ?? []}
       keyExtractor={(r) => r.blocked_id}
       ListEmptyComponent={rows ? (

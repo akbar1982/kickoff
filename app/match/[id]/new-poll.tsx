@@ -9,6 +9,7 @@ import { useAuth } from "../../../lib/auth";
 import { locationPicker } from "../../../lib/pickerStore";
 import { formatWhen } from "../../../lib/hooks";
 import { colors, radius, space, type } from "../../../lib/theme";
+import { column, widths } from "../../../lib/layout";
 import type { Place } from "../../../lib/types";
 
 type Kind = "time" | "location";
@@ -56,7 +57,7 @@ export default function NewPoll() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: space.md }} keyboardShouldPersistTaps="handled">
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[{ padding: space.md }, column(widths.form)]} keyboardShouldPersistTaps="handled">
       <View style={{ flexDirection: "row", backgroundColor: colors.surface, borderRadius: radius.pill, padding: 4, marginBottom: space.lg }}>
         {(["time", "location"] as Kind[]).map((k) => (
           <Pressable key={k} onPress={() => { setKind(k); setOptions([]); }}

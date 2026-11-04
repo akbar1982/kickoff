@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button, Card, Chip } from "../../components/ui";
 import { supabase } from "../../lib/supabase";
 import { colors, space, type } from "../../lib/theme";
+import { column, widths } from "../../lib/layout";
 import type { Group } from "../../lib/types";
 
 export default function Groups() {
@@ -32,9 +33,9 @@ export default function Groups() {
   ].filter((s) => s.data.length);
 
   return (
-    <SectionList
+    <SectionList showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: space.md }}
+      contentContainerStyle={[{ padding: space.md }, column(widths.page)]}
       sections={sections}
       keyExtractor={(g) => g.id}
       stickySectionHeadersEnabled={false}

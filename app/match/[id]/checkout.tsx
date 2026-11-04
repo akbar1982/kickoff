@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabase";
 import { formatPrice, formatWhen } from "../../../lib/hooks";
 import { confirmStripePayment, getStripeSheetParams, getVenmoClientToken, getVenmoNonce, submitVenmoPayment } from "../../../lib/payments";
 import { colors, space, type } from "../../../lib/theme";
+import { column, widths } from "../../../lib/layout";
 import type { Match } from "../../../lib/types";
 
 // Venmo runs through Braintree, which pays into the platform's account rather than the organizer's,
@@ -120,7 +121,7 @@ export default function Checkout() {
   const ss = secondsLeft !== null ? String(secondsLeft % 60).padStart(2, "0") : null;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: space.md }}>
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[{ padding: space.md }, column(widths.form)]}>
       <Card>
         <Text style={type.small}>{formatWhen(match.starts_at)}</Text>
         <Text style={[type.title, { marginTop: 2 }]}>{match.title}</Text>

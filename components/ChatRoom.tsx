@@ -7,6 +7,7 @@ import { block, report } from "../lib/safety";
 import { freshChannel, supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { colors, radius, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 import type { ChatMessage } from "../lib/types";
 
 const PAGE = 100;
@@ -87,11 +88,11 @@ export function ChatRoom({ matchId = null, groupId = null }: { matchId?: string 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}
       style={{ flex: 1, backgroundColor: colors.bg }}>
-      <FlatList
+      <FlatList showsVerticalScrollIndicator={false}
         inverted
         data={messages}
         keyExtractor={(m) => m.id}
-        contentContainerStyle={{ padding: space.md }}
+        contentContainerStyle={[{ padding: space.md }, column(widths.page)]}
         renderItem={({ item, index }) => {
           const mine = item.user_id === me;
           // inverted list: the next-older message is at index + 1
@@ -126,18 +127,19 @@ export function ChatRoom({ matchId = null, groupId = null }: { matchId?: string 
           </View>
         }
       />
-      <View style={{ flexDirection: "row", alignItems: "flex-end", padding: space.sm, paddingBottom: space.md,
-        borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg }}>
-        <TextInput value={draft} onChangeText={setDraft} placeholder="Message" placeholderTextColor={colors.muted}
-          multiline maxLength={2000}
-          style={{ flex: 1, maxHeight: 120, minHeight: 44, borderRadius: 22, backgroundColor: colors.surface,
-            borderWidth: 1, borderColor: colors.border, color: colors.text, fontSize: 16,
-            paddingHorizontal: space.md, paddingTop: 12, paddingBottom: 12 }} />
-        <Pressable onPress={send} disabled={!draft.trim() || sending} hitSlop={8}
-          style={{ width: 44, height: 44, borderRadius: 22, marginLeft: space.sm, alignItems: "center", justifyContent: "center",
-            backgroundColor: draft.trim() ? colors.accent : colors.surfaceHi }}>
-          <Ionicons name="arrow-up" size={22} color={draft.trim() ? colors.accentInk : colors.muted} />
-        </Pressable>
+      <View style={{ padding: space.sm, paddingBottom: space.md, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg }}>
+        <View style={[{ flexDirection: "row", alignItems: "flex-end" }, column(widths.page)]}>
+          <TextInput value={draft} onChangeText={setDraft} placeholder="Message" placeholderTextColor={colors.muted}
+            multiline maxLength={2000}
+            style={{ flex: 1, maxHeight: 120, minHeight: 44, borderRadius: 22, backgroundColor: colors.surface,
+              borderWidth: 1, borderColor: colors.border, color: colors.text, fontSize: 16,
+              paddingHorizontal: space.md, paddingTop: 12, paddingBottom: 12 }} />
+          <Pressable onPress={send} disabled={!draft.trim() || sending} hitSlop={8}
+            style={{ width: 44, height: 44, borderRadius: 22, marginLeft: space.sm, alignItems: "center", justifyContent: "center",
+              backgroundColor: draft.trim() ? colors.accent : colors.surfaceHi }}>
+            <Ionicons name="arrow-up" size={22} color={draft.trim() ? colors.accentInk : colors.muted} />
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

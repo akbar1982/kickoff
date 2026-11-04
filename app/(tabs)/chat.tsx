@@ -7,6 +7,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { formatWhen } from "../../lib/hooks";
 import { colors, space, type } from "../../lib/theme";
+import { column, widths } from "../../lib/layout";
 
 interface Room {
   key: string;
@@ -81,9 +82,9 @@ export default function Chats() {
     : router.push("/community-chat");
 
   return (
-    <FlatList
+    <FlatList showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: space.md }}
+      contentContainerStyle={[{ padding: space.md }, column(widths.page)]}
       data={rooms}
       keyExtractor={(r) => r.key}
       refreshControl={<RefreshControl tintColor={colors.accent} refreshing={refreshing}

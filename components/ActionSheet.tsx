@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 
 export interface SheetOption { label: string; destructive?: boolean; onPress: () => void }
 interface Sheet { title?: string; message?: string; options: SheetOption[] }
@@ -22,22 +23,25 @@ export function ActionSheetHost() {
 
   return (
     <Modal visible={open} transparent animationType="slide" onRequestClose={() => pick()}>
-      <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => pick()} />
-      <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
-        padding: space.md, paddingBottom: insets.bottom + space.md }}>
-        {sheet?.title && <Text style={[type.body, { fontWeight: "700", textAlign: "center" }]}>{sheet.title}</Text>}
-        {sheet?.message && <Text style={[type.small, { textAlign: "center", marginTop: 4 }]}>{sheet.message}</Text>}
-        <View style={{ marginTop: space.sm }}>
-          {sheet?.options.map((o) => (
-            <Pressable key={o.label} onPress={() => pick(o)}
-              style={({ pressed }) => ({ paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: colors.border,
-                opacity: pressed ? 0.6 : 1 })}>
-              <Text style={{ fontSize: 17, textAlign: "center", color: o.destructive ? colors.danger : colors.text }}>{o.label}</Text>
+      {/* dimmed backdrop behind and beside the sheet (it is narrower than the screen on iPad) */}
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <Pressable style={{ flex: 1 }} onPress={() => pick()} />
+        <View style={[{ backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
+          padding: space.md, paddingBottom: insets.bottom + space.md }, column(widths.form)]}>
+          {sheet?.title && <Text style={[type.body, { fontWeight: "700", textAlign: "center" }]}>{sheet.title}</Text>}
+          {sheet?.message && <Text style={[type.small, { textAlign: "center", marginTop: 4 }]}>{sheet.message}</Text>}
+          <View style={{ marginTop: space.sm }}>
+            {sheet?.options.map((o) => (
+              <Pressable key={o.label} onPress={() => pick(o)}
+                style={({ pressed }) => ({ paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: colors.border,
+                  opacity: pressed ? 0.6 : 1 })}>
+                <Text style={{ fontSize: 17, textAlign: "center", color: o.destructive ? colors.danger : colors.text }}>{o.label}</Text>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => pick()} style={{ paddingVertical: 15 }}>
+              <Text style={{ fontSize: 17, textAlign: "center", fontWeight: "700", color: colors.muted }}>Cancel</Text>
             </Pressable>
-          ))}
-          <Pressable onPress={() => pick()} style={{ paddingVertical: 15 }}>
-            <Text style={{ fontSize: 17, textAlign: "center", fontWeight: "700", color: colors.muted }}>Cancel</Text>
-          </Pressable>
+          </View>
         </View>
       </View>
     </Modal>

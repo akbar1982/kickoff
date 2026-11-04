@@ -6,6 +6,7 @@ import { Card, Chip } from "../../../components/ui";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { colors, radius, space, type } from "../../../lib/theme";
+import { column, widths } from "../../../lib/layout";
 import type { GroupMember } from "../../../lib/types";
 
 export default function GroupMembers() {
@@ -59,7 +60,7 @@ export default function GroupMembers() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: space.md, paddingBottom: space.xl }}
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[{ padding: space.md, paddingBottom: space.xl }, column(widths.page)]}
       keyboardShouldPersistTaps="handled">
       {organizer && (
         <>

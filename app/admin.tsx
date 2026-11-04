@@ -6,6 +6,7 @@ import { Card } from "../components/ui";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { colors, radius, space, type } from "../lib/theme";
+import { column, widths } from "../lib/layout";
 import type { Profile, Role } from "../lib/types";
 
 const ROLES: { value: Role; label: string }[] = [
@@ -48,9 +49,9 @@ export default function Members() {
   }
 
   return (
-    <FlatList
+    <FlatList showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: space.md }}
+      contentContainerStyle={[{ padding: space.md }, column(widths.page)]}
       data={shown}
       keyExtractor={(p) => p.id}
       keyboardShouldPersistTaps="handled"

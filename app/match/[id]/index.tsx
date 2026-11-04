@@ -7,6 +7,7 @@ import { freshChannel, supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 import { formatPrice, formatWhen, headcountLabel, isPast } from "../../../lib/hooks";
 import { colors, radius, space, type } from "../../../lib/theme";
+import { column, widths } from "../../../lib/layout";
 import type { Match, Poll, Rsvp } from "../../../lib/types";
 
 export default function MatchDetail() {
@@ -155,7 +156,7 @@ export default function MatchDetail() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: "" }} />
-      <ScrollView contentContainerStyle={{ padding: space.md, paddingBottom: 140 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.md, paddingBottom: 140 }, column(widths.page)]}>
         {cancelled && <View style={{ marginBottom: space.md }}><Chip label="This game was cancelled" tone="warn" icon="close-circle" /></View>}
         {ended && !cancelled && <View style={{ marginBottom: space.md }}><Chip label="This game has been played" icon="time" /></View>}
         <Text style={type.small}>{formatWhen(match.starts_at)} · {match.duration_min} min</Text>
@@ -313,7 +314,7 @@ export default function MatchDetail() {
       {cta && (
         <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: space.md, paddingBottom: space.lg,
           backgroundColor: colors.bg, borderTopWidth: 1, borderTopColor: colors.border }}>
-          <Button title={cta.title} onPress={cta.onPress} loading={busy} />
+          <Button title={cta.title} onPress={cta.onPress} loading={busy} style={column(widths.form)} />
         </View>
       )}
     </View>

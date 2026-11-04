@@ -1,30 +1,37 @@
 import React, { useMemo, useState } from "react";
-import { FlatList, RefreshControl, Text, View } from "react-native";
+import { RefreshControl, SectionList, Text, View } from "react-native";
 import { Screen } from "../../components/ui";
 import { MatchCard } from "../../components/MatchCard";
 import { upcomingThenPast, useMatches, useUserLocation } from "../../lib/hooks";
 import { distanceKm } from "../../lib/places";
 import { colors, space, type } from "../../lib/theme";
+import { rows, useLayout } from "../../lib/layout";
 
 export default function Feed() {
   const { matches, loading, error, reload } = useMatches();
   const { coords, granted } = useUserLocation();
+  const { columns } = useLayout();
   const [refreshing, setRefreshing] = useState(false);
 
-  const sorted = useMemo(() => {
-    const dist = (m: (typeof matches)[number]) => distanceKm(coords, { lat: m.lat, lng: m.lng });
+  const sections = useMemo(() => {
+    const withDist = (m: (typeof matches)[number]) => ({ m, d: distanceKm(coords, { lat: m.lat, lng: m.lng }) });
     const { upcoming, past } = upcomingThenPast(matches);
     // soonest first; distance is shown, and used only as a tiebreaker for same-start games
-    const soon = upcoming.map((m) => ({ m, d: dist(m) }))
+    const soon = upcoming.map(withDist)
       .sort((a, b) => +new Date(a.m.starts_at) - +new Date(b.m.starts_at) || a.d - b.d);
-    return { items: [...soon, ...past.map((m) => ({ m, d: dist(m) }))], firstPast: past[0]?.id };
-  }, [matches, coords]);
+    // one list row holds `columns` cards: 1 on phones, 2–3 side by side on iPad
+    return [
+      { title: "", data: rows(soon, columns) },
+      { title: "Past games", data: rows(past.map(withDist), columns) },
+    ].filter((s) => s.data.length);
+  }, [matches, coords, columns]);
 
   return (
     <Screen>
-      <FlatList
-        data={sorted.items}
-        keyExtractor={(x) => x.m.id}
+      <SectionList showsVerticalScrollIndicator={false}
+        sections={sections}
+        keyExtractor={(row) => row[0].m.id}
+        stickySectionHeadersEnabled={false}
         contentContainerStyle={{ padding: space.md, paddingBottom: space.xl }}
         refreshControl={
           <RefreshControl tintColor={colors.accent} refreshing={refreshing}
@@ -35,11 +42,17 @@ export default function Feed() {
             {granted ? "Games near you" : "Enable location to see distances"}
           </Text>
         }
-        renderItem={({ item }) => (
-          <>
-            {item.m.id === sorted.firstPast && <Text style={[type.label, { marginTop: space.md, marginBottom: space.sm }]}>Past games</Text>}
-            <MatchCard match={item.m} distanceKm={granted ? item.d : undefined} />
-          </>
+        renderSectionHeader={({ section }) => section.title
+          ? <Text style={[type.label, { marginTop: space.md, marginBottom: space.sm }]}>{section.title}</Text>
+          : null}
+        renderItem={({ item: row }) => (
+          <View style={{ flexDirection: "row", gap: space.md }}>
+            {Array.from({ length: columns }, (_, i) => (
+              <View key={row[i]?.m.id ?? i} style={{ flex: 1 }}>
+                {row[i] && <MatchCard match={row[i].m} distanceKm={granted ? row[i].d : undefined} fill={columns > 1} />}
+              </View>
+            ))}
+          </View>
         )}
         ListEmptyComponent={
           <View style={{ alignItems: "center", marginTop: 80 }}>

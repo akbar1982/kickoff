@@ -4,8 +4,10 @@ import { useRouter } from "expo-router";
 import { Button, Field, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { colors, space, type } from "../../lib/theme";
+import { column, useLayout, widths } from "../../lib/layout";
 
 export default function SignUp() {
+  const { wide } = useLayout();
   const { signUpWithEmail } = useAuth();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -38,7 +40,9 @@ export default function SignUp() {
   return (
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: space.lg }} keyboardShouldPersistTaps="handled">
+        {/* on iPad the form sits centred on the screen; on phones it starts at the top */}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.lg, flexGrow: 1, justifyContent: wide ? "center" : "flex-start" }, column(widths.form)]}
+          keyboardShouldPersistTaps="handled">
           <Text style={type.display}>Join the squad</Text>
           <Text style={[type.body, { color: colors.muted, marginBottom: space.xl, marginTop: space.sm }]}>
             Create your account in under a minute.

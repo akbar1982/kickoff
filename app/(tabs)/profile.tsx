@@ -9,6 +9,7 @@ import { formatWhen } from "../../lib/hooks";
 import { usePayouts } from "../../lib/payments";
 import { deleteAccount, openLegal } from "../../lib/safety";
 import { colors, space, type } from "../../lib/theme";
+import { column, widths } from "../../lib/layout";
 
 interface Mine {
   match_id: string; status: string; paid_at: string | null;
@@ -65,7 +66,7 @@ export default function Profile() {
   }, [session]));
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: space.md }}>
+    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[{ padding: space.md }, column(widths.page)]}>
       <View style={{ alignItems: "center", marginVertical: space.lg }}>
         <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: colors.accent, alignItems: "center", justifyContent: "center" }}>
           <Text style={{ fontSize: 36, fontWeight: "800", color: colors.accentInk }}>{name.slice(0, 1).toUpperCase()}</Text>
