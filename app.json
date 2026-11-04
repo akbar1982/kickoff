@@ -14,11 +14,17 @@
       "backgroundColor": "#0B0F0D"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.akbar.soccer",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Kickoff uses your location to show pickup games near you.",
-        "NSCameraUsageDescription": "Kickoff uses the camera only if you choose to scan a payment card at checkout."
+        "NSCameraUsageDescription": "Kickoff uses the camera only if you choose to scan a payment card at checkout.",
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
       },
       "usesAppleSignIn": true,
       "config": {

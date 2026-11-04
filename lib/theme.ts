@@ -22,3 +22,6 @@ export const type = {
   small: { fontSize: 13, color: colors.muted },
   label: { fontSize: 12, fontWeight: "700" as const, letterSpacing: 0.8, color: colors.muted, textTransform: "uppercase" as const },
 };
+
+/** Keeps lists and forms at a comfortable reading width on iPad; no effect on phones. */
+export const readable = { width: "100%" as const, maxWidth: 720, alignSelf: "center" as const };

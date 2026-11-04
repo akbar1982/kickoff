@@ -1,14 +1,20 @@
 import "react-native-url-polyfill/auto";
 import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { DarkTheme, Stack, ThemeProvider, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActionSheetHost } from "../components/ActionSheet";
 import { AuthProvider, useAuth } from "../lib/auth";
-import { colors } from "../lib/theme";
+import { colors, readable } from "../lib/theme";
+
+// dark navigator background, so the space beside the content column on iPad matches the app
+const navTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, background: colors.bg, card: colors.bg, text: colors.text, border: colors.border, primary: colors.accent },
+};
 
 function Gate() {
   const { session, loading } = useAuth();
@@ -21,6 +27,7 @@ function Gate() {
     if (!session && !inAuth) router.replace("/(auth)/welcome");
     else if (session && inAuth) router.replace("/(tabs)");
   }, [session, loading, segments]);
+
 
   if (loading) {
     return (
@@ -37,10 +44,10 @@ function Gate() {
       headerTitleStyle: { fontWeight: "700" },
       headerShadowVisible: false,
       headerBackButtonDisplayMode: "minimal",
-      contentStyle: { backgroundColor: colors.bg },
+      contentStyle: [{ backgroundColor: colors.bg }, readable],
     }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
       <Stack.Screen name="match/[id]/index" options={{ title: "" }} />
       <Stack.Screen name="match/[id]/checkout" options={{ title: "Checkout", presentation: "modal" }} />
       <Stack.Screen name="match/[id]/chat" options={{ title: "Game chat" }} />
@@ -61,7 +68,7 @@ function Gate() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
         <StripeProvider
           publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""}
@@ -69,9 +76,11 @@ export default function RootLayout() {
           urlScheme="kickoff"
         >
           <AuthProvider>
-            <StatusBar style="light" />
-            <Gate />
-            <ActionSheetHost />
+            <ThemeProvider value={navTheme}>
+              <StatusBar style="light" />
+              <Gate />
+              <ActionSheetHost />
+            </ThemeProvider>
           </AuthProvider>
         </StripeProvider>
       </SafeAreaProvider>
