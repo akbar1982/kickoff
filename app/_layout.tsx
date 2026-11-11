@@ -16,13 +16,16 @@ const navTheme = {
   colors: { ...DarkTheme.colors, background: colors.bg, card: colors.bg, text: colors.text, border: colors.border, primary: colors.accent },
 };
 
+// routes that only close themselves; see app/auth-callback.tsx
+const returnLinks: string[] = ["auth-callback", "payouts-return"];
+
 function Gate() {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || returnLinks.includes(segments[0])) return;
     const inAuth = segments[0] === "(auth)";
     if (!session && !inAuth) router.replace("/(auth)/welcome");
     else if (session && inAuth) router.replace("/(tabs)");
@@ -62,6 +65,8 @@ function Gate() {
       <Stack.Screen name="reports" options={{ title: "Reports" }} />
       <Stack.Screen name="blocked" options={{ title: "Blocked users" }} />
       <Stack.Screen name="match/[id]/new-poll" options={{ title: "New vote", presentation: "modal" }} />
+      <Stack.Screen name="auth-callback" options={{ headerShown: false, animation: "none" }} />
+      <Stack.Screen name="payouts-return" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="pick-location" options={{ title: "Choose location", presentation: "modal" }} />
     </Stack>
   );
