@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../components/ui";
 import { formatPrice, formatWhen, headcountLabel, isPast, useMatches, useUserLocation } from "../../lib/hooks";
 import { colors, space, type } from "../../lib/theme";
+import { t } from "../../lib/i18n";
 
 export default function MapTab() {
   const { matches } = useMatches();
@@ -30,8 +31,8 @@ export default function MapTab() {
               <View style={styles.callout}>
                 <Text style={type.small}>{formatWhen(m.starts_at)}</Text>
                 <Text style={[type.body, { fontWeight: "700" }]} numberOfLines={1}>{m.title}</Text>
-                <Text style={type.small}>{isPast(m) ? "Played" : headcountLabel(m).text} · {formatPrice(m.price_cents, m.currency)}</Text>
-                <Text style={[type.small, { color: colors.accent, marginTop: 4 }]}>Tap for details</Text>
+                <Text style={type.small}>{isPast(m) ? t("match.played", { count: m.going_count }) : headcountLabel(m).text} · {formatPrice(m.price_cents, m.currency)}</Text>
+                <Text style={[type.small, { color: colors.accent, marginTop: 4 }]}>{t("match.tapDetails")}</Text>
               </View>
             </Callout>
           </Marker>

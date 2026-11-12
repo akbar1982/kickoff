@@ -11,6 +11,7 @@ import { formatWhen } from "../../../lib/hooks";
 import { colors, radius, space, type } from "../../../lib/theme";
 import { column, widths } from "../../../lib/layout";
 import type { Place } from "../../../lib/types";
+import { t } from "../../../lib/i18n";
 
 type Kind = "time" | "location";
 interface Draft { key: string; label: string; starts_at?: string; place?: Place }
@@ -26,7 +27,7 @@ export default function NewPoll() {
   const [busy, setBusy] = useState(false);
 
   const addTime = () => {
-    if (when.getTime() < Date.now()) { Alert.alert("Pick a future time"); return; }
+    if (when.getTime() < Date.now()) { Alert.alert(t("poll.futureTime")); return; }
     const iso = when.toISOString();
     if (options.some((o) => o.starts_at === iso)) return;
     setOptions((o) => [...o, { key: iso, label: formatWhen(iso), starts_at: iso }]);
@@ -40,19 +41,19 @@ export default function NewPoll() {
 
   const submit = async () => {
     if (!session) return;
-    if (options.length < 2) { Alert.alert("Add at least two options", "People need something to choose between."); return; }
+    if (options.length < 2) { Alert.alert(t("poll.twoOptions"), t("poll.twoOptionsBody")); return; }
     setBusy(true);
-    const q = question.trim() || (kind === "time" ? "When should we play?" : "Where should we play?");
+    const q = question.trim() || t(kind === "time" ? "poll.when" : "poll.where");
     const { data: poll, error } = await supabase.from("polls")
       .insert({ match_id: id, kind, question: q, created_by: session.user.id }).select("id").single();
-    if (error || !poll) { setBusy(false); Alert.alert("Couldn't create vote", error?.message); return; }
+    if (error || !poll) { setBusy(false); Alert.alert(t("poll.couldntCreate"), error?.message); return; }
 
     const { error: optErr } = await supabase.from("poll_options").insert(options.map((o) => ({
       poll_id: poll.id, label: o.label, starts_at: o.starts_at ?? null,
       venue_name: o.place?.name ?? null, lat: o.place?.lat ?? null, lng: o.place?.lng ?? null,
     })));
     setBusy(false);
-    if (optErr) { Alert.alert("Couldn't add options", optErr.message); return; }
+    if (optErr) { Alert.alert(t("poll.couldntAdd"), optErr.message); return; }
     router.back();
   };
 
@@ -64,16 +65,16 @@ export default function NewPoll() {
             style={{ flex: 1, height: 42, borderRadius: radius.pill, alignItems: "center", justifyContent: "center",
               backgroundColor: kind === k ? colors.accent : "transparent" }}>
             <Text style={{ fontWeight: "700", color: kind === k ? colors.accentInk : colors.muted }}>
-              {k === "time" ? "Vote on time" : "Vote on place"}
+              {t(k === "time" ? "poll.onTime" : "poll.onPlace")}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <Field label="Question" value={question} onChangeText={setQuestion}
-        placeholder={kind === "time" ? "When should we play?" : "Where should we play?"} />
+      <Field label={t("poll.question")} value={question} onChangeText={setQuestion}
+        placeholder={t(kind === "time" ? "poll.when" : "poll.where")} />
 
-      <Text style={[type.label, { marginBottom: 6 }]}>Options ({options.length})</Text>
+      <Text style={[type.label, { marginBottom: 6 }]}>{t("poll.options", { count: options.length })}</Text>
       {options.map((o) => (
         <Card key={o.key} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
           <Ionicons name={kind === "time" ? "time-outline" : "location-outline"} size={18} color={colors.accent} />
@@ -90,15 +91,15 @@ export default function NewPoll() {
       <View style={{ marginTop: space.sm }}>
         {kind === "time" ? (
           <>
-            <DateTimeField label="Add a time option" value={when} onChange={setWhen} />
-            <Button title="Add this time" variant="secondary" icon="add" onPress={addTime} />
+            <DateTimeField label={t("poll.addTimeLabel")} value={when} onChange={setWhen} />
+            <Button title={t("poll.addTime")} variant="secondary" icon="add" onPress={addTime} />
           </>
         ) : (
-          <Button title="Add a location from the map" variant="secondary" icon="map-outline" onPress={addPlace} />
+          <Button title={t("poll.addPlace")} variant="secondary" icon="map-outline" onPress={addPlace} />
         )}
       </View>
 
-      <Button title="Start vote" onPress={submit} loading={busy} style={{ marginTop: space.xl }} />
+      <Button title={t("poll.start")} onPress={submit} loading={busy} style={{ marginTop: space.xl }} />
     </ScrollView>
   );
 }

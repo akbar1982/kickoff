@@ -3,7 +3,7 @@
     "name": "Kickoff",
     "slug": "kickoff",
     "scheme": "kickoff",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -47,6 +47,29 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "en",
+              "ru",
+              "uz",
+              "es",
+              "ko",
+              "zh-Hans"
+            ],
+            "android": [
+              "en",
+              "ru",
+              "uz",
+              "es",
+              "ko",
+              "zh-Hans"
+            ]
+          }
+        }
+      ],
       "expo-secure-store",
       "expo-apple-authentication",
       [
@@ -93,6 +116,14 @@
         "projectId": "7ba920ed-6720-4b6d-85b7-4554b5a7ee91"
       }
     },
-    "owner": "akbar1982"
+    "owner": "akbar1982",
+    "locales": {
+      "en": "./locales/native/en.json",
+      "ru": "./locales/native/ru.json",
+      "uz": "./locales/native/uz.json",
+      "es": "./locales/native/es.json",
+      "ko": "./locales/native/ko.json",
+      "zh-Hans": "./locales/native/zh-Hans.json"
+    }
   }
 }

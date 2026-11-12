@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, space, type } from "../lib/theme";
 import { column, widths } from "../lib/layout";
+import { t } from "../lib/i18n";
 
 export interface SheetOption { label: string; destructive?: boolean; onPress: () => void }
 interface Sheet { title?: string; message?: string; options: SheetOption[] }
@@ -39,7 +40,7 @@ export function ActionSheetHost() {
               </Pressable>
             ))}
             <Pressable onPress={() => pick()} style={{ paddingVertical: 15 }}>
-              <Text style={{ fontSize: 17, textAlign: "center", fontWeight: "700", color: colors.muted }}>Cancel</Text>
+              <Text style={{ fontSize: 17, textAlign: "center", fontWeight: "700", color: colors.muted }}>{t("common.cancel")}</Text>
             </Pressable>
           </View>
         </View>

@@ -5,6 +5,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, space, type } from "../lib/theme";
+import { t } from "../lib/i18n";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -112,8 +113,8 @@ export function PlayerMeter({ going, min, max }: { going: number; min: number; m
         <View style={[styles.meterMin, { left: `${minPct}%` }]} />
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-        <Text style={type.small}>{going} going</Text>
-        <Text style={type.small}>min {min} · max {max}</Text>
+        <Text style={type.small}>{t("match.going", { count: going })}</Text>
+        <Text style={type.small}>{t("match.minMax", { min, max })}</Text>
       </View>
     </View>
   );

@@ -9,6 +9,7 @@ import { confirmStripePayment, getStripeSheetParams, getVenmoClientToken, getVen
 import { colors, space, type } from "../../../lib/theme";
 import { column, widths } from "../../../lib/layout";
 import type { Match } from "../../../lib/types";
+import { t } from "../../../lib/i18n";
 
 // Venmo runs through Braintree, which pays into the platform's account rather than the organizer's,
 // and its app-side module isn't connected yet (see README). Hidden until both are sorted out.
@@ -40,12 +41,12 @@ export default function Checkout() {
   useEffect(() => {
     if (secondsLeft === null) return;
     if (secondsLeft <= 0) {
-      Alert.alert("Spot released", "Your 15 minute hold ran out. Join again to get a new one.");
+      Alert.alert(t("checkout.released"), t("checkout.releasedBody"));
       router.back();
       return;
     }
-    const t = setTimeout(() => setSecondsLeft((s) => (s === null ? s : s - 1)), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setSecondsLeft((s) => (s === null ? s : s - 1)), 1000);
+    return () => clearTimeout(timer);
   }, [secondsLeft]);
 
   /** Waits for the server to confirm the spot (set by Stripe's webhook, not by this device). */
@@ -89,18 +90,18 @@ export default function Checkout() {
 
       const res = await presentPaymentSheet();
       if (res.error) {
-        if (res.error.code !== "Canceled") Alert.alert("Payment failed", res.error.message);
+        if (res.error.code !== "Canceled") Alert.alert(t("checkout.failed"), res.error.message);
         return;
       }
       await confirmStripePayment(id).catch(() => null);   // the webhook confirms it too, as a backstop
       if (await waitForConfirmation()) {
         router.back();
       } else {
-        Alert.alert("Payment received", "We're confirming your spot. It will show up on the game page in a moment.");
+        Alert.alert(t("checkout.received"), t("checkout.receivedBody"));
         router.back();
       }
     } catch (e: any) {
-      Alert.alert("Payment error", e?.message ?? "Something went wrong.");
+      Alert.alert(t("checkout.error"), e?.message ?? t("common.somethingWrongDot"));
     } finally { setBusy(null); }
   };
 
@@ -112,7 +113,7 @@ export default function Checkout() {
       await submitVenmoPayment(id, nonce);
       router.back();
     } catch (e: any) {
-      Alert.alert("Venmo", e?.message ?? "Something went wrong.");
+      Alert.alert("Venmo", e?.message ?? t("common.somethingWrongDot"));
     } finally { setBusy(null); }
   };
 
@@ -128,29 +129,29 @@ export default function Checkout() {
         <Text style={[type.small, { marginTop: 2 }]}>{match.venue_name}</Text>
         <View style={{ height: 1, backgroundColor: colors.border, marginVertical: space.md }} />
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-          <Text style={type.body}>Total</Text>
+          <Text style={type.body}>{t("checkout.total")}</Text>
           <Text style={{ color: colors.text, fontSize: 28, fontWeight: "800" }}>{formatPrice(match.price_cents, match.currency)}</Text>
         </View>
       </Card>
 
       {mm !== null && (
         <View style={{ alignItems: "center", marginVertical: space.md }}>
-          <Chip label={`Spot held for ${mm}:${ss}`} tone={secondsLeft! < 120 ? "warn" : "accent"} icon="time" />
+          <Chip label={t("checkout.held", { time: `${mm}:${ss}` })} tone={secondsLeft! < 120 ? "warn" : "accent"} icon="time" />
         </View>
       )}
 
       <View style={{ gap: space.sm + 4, marginTop: space.md }}>
         <Button
-          title={Platform.OS === "ios" ? "Pay with card or Apple Pay" : "Pay with card or Google Pay"}
+          title={t(Platform.OS === "ios" ? "checkout.payApple" : "checkout.payGoogle")}
           icon="card" onPress={payWithCard} loading={busy === "card"} disabled={busy === "venmo"} />
         {VENMO_ENABLED && (
-          <Button title="Pay with Venmo" variant="secondary" onPress={payWithVenmo}
+          <Button title={t("checkout.payVenmo")} variant="secondary" onPress={payWithVenmo}
             loading={busy === "venmo"} disabled={busy === "card"} />
         )}
       </View>
 
       <Text style={[type.small, { textAlign: "center", marginTop: space.lg }]}>
-        Visa, Mastercard, American Express and Discover accepted. Card details go straight to Stripe and never touch our servers.
+        {t("checkout.cards")}
       </Text>
     </ScrollView>
   );

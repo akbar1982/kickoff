@@ -10,6 +10,7 @@ import { locationPicker } from "../lib/pickerStore";
 import { colors, radius, space, type } from "../lib/theme";
 import { column, widths } from "../lib/layout";
 import type { Place } from "../lib/types";
+import { t } from "../lib/i18n";
 
 export default function PickLocation() {
   const router = useRouter();
@@ -28,12 +29,12 @@ export default function PickLocation() {
   // debounce the venue search
   useEffect(() => {
     if (query.trim().length < 3) { setResults([]); return; }
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setSearching(true);
       try { setResults(await searchPlaces(query, center)); } catch { setResults([]); }
       setSearching(false);
     }, 350);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [query]);
 
   const choose = (p: Place) => { locationPicker.resolve(p); router.back(); };
@@ -75,7 +76,7 @@ export default function PickLocation() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search pitches, parks, sports centres"
+            placeholder={t("pick.search")}
             placeholderTextColor={colors.muted}
             style={styles.searchInput}
             returnKeyType="search"
@@ -102,7 +103,7 @@ export default function PickLocation() {
       </View>
 
       <View style={styles.footer}>
-        <Button title="Use this spot" onPress={usePin} style={column(widths.form)} />
+        <Button title={t("pick.use")} onPress={usePin} style={column(widths.form)} />
       </View>
     </Screen>
   );

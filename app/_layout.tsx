@@ -9,6 +9,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActionSheetHost } from "../components/ActionSheet";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { colors } from "../lib/theme";
+import { LanguageProvider, t } from "../lib/i18n";
 
 // dark navigator background, so the space beside the content column on iPad matches the app
 const navTheme = {
@@ -53,21 +54,21 @@ function Gate() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="match/[id]/index" options={{ title: "" }} />
-      <Stack.Screen name="match/[id]/checkout" options={{ title: "Checkout", presentation: "modal" }} />
-      <Stack.Screen name="match/[id]/chat" options={{ title: "Game chat" }} />
-      <Stack.Screen name="community-chat" options={{ title: "Community" }} />
-      <Stack.Screen name="create" options={{ title: "Post a game" }} />
-      <Stack.Screen name="group/new" options={{ title: "New group", presentation: "modal" }} />
+      <Stack.Screen name="match/[id]/checkout" options={{ title: t("nav.checkout"), presentation: "modal" }} />
+      <Stack.Screen name="match/[id]/chat" options={{ title: t("nav.gameChat") }} />
+      <Stack.Screen name="community-chat" options={{ title: t("nav.community") }} />
+      <Stack.Screen name="create" options={{ title: t("nav.postGame") }} />
+      <Stack.Screen name="group/new" options={{ title: t("nav.newGroup"), presentation: "modal" }} />
       <Stack.Screen name="group/[id]/index" options={{ title: "" }} />
-      <Stack.Screen name="group/[id]/members" options={{ title: "Members" }} />
-      <Stack.Screen name="group/[id]/chat" options={{ title: "Group chat" }} />
-      <Stack.Screen name="admin" options={{ title: "Users" }} />
-      <Stack.Screen name="reports" options={{ title: "Reports" }} />
-      <Stack.Screen name="blocked" options={{ title: "Blocked users" }} />
-      <Stack.Screen name="match/[id]/new-poll" options={{ title: "New vote", presentation: "modal" }} />
+      <Stack.Screen name="group/[id]/members" options={{ title: t("nav.members") }} />
+      <Stack.Screen name="group/[id]/chat" options={{ title: t("nav.groupChat") }} />
+      <Stack.Screen name="admin" options={{ title: t("nav.users") }} />
+      <Stack.Screen name="reports" options={{ title: t("nav.reports") }} />
+      <Stack.Screen name="blocked" options={{ title: t("nav.blocked") }} />
+      <Stack.Screen name="match/[id]/new-poll" options={{ title: t("nav.newVote"), presentation: "modal" }} />
       <Stack.Screen name="auth-callback" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="payouts-return" options={{ headerShown: false, animation: "none" }} />
-      <Stack.Screen name="pick-location" options={{ title: "Choose location", presentation: "modal" }} />
+      <Stack.Screen name="pick-location" options={{ title: t("nav.chooseLocation"), presentation: "modal" }} />
     </Stack>
   );
 }
@@ -82,11 +83,13 @@ export default function RootLayout() {
           urlScheme="kickoff"
         >
           <AuthProvider>
-            <ThemeProvider value={navTheme}>
-              <StatusBar style="light" />
-              <Gate />
-              <ActionSheetHost />
-            </ThemeProvider>
+            <LanguageProvider>
+              <ThemeProvider value={navTheme}>
+                <StatusBar style="light" />
+                <Gate />
+                <ActionSheetHost />
+              </ThemeProvider>
+            </LanguageProvider>
           </AuthProvider>
         </StripeProvider>
       </SafeAreaProvider>

@@ -1,4 +1,5 @@
 import type { Place } from "./types";
+import { t } from "./i18n";
 
 const KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY ?? "";
 
@@ -25,7 +26,7 @@ export async function searchPlaces(query: string, near: { lat: number; lng: numb
   const json = await res.json();
   return (json.places ?? []).map((p: any) => ({
     id: p.id,
-    name: p.displayName?.text ?? "Unnamed place",
+    name: p.displayName?.text ?? t("common.unnamedPlace"),
     address: p.formattedAddress ?? "",
     lat: p.location.latitude,
     lng: p.location.longitude,
@@ -39,11 +40,11 @@ export async function describePin(lat: number, lng: number): Promise<{ name: str
     const [r] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
     const street = [r?.streetNumber, r?.street].filter(Boolean).join(" ");
     return {
-      name: r?.name || street || "Dropped pin",
+      name: r?.name || street || t("common.droppedPin"),
       address: [street, r?.city, r?.region].filter(Boolean).join(", "),
     };
   } catch {
-    return { name: "Dropped pin", address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` };
+    return { name: t("common.droppedPin"), address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` };
   }
 }
 

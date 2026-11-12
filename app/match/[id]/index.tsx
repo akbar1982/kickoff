@@ -9,6 +9,7 @@ import { formatPrice, formatWhen, headcountLabel, isPast } from "../../../lib/ho
 import { colors, radius, space, type } from "../../../lib/theme";
 import { column, widths } from "../../../lib/layout";
 import type { Match, Poll, Rsvp } from "../../../lib/types";
+import { t } from "../../../lib/i18n";
 
 export default function MatchDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -72,61 +73,61 @@ export default function MatchDetail() {
     setBusy(true);
     const { data, error } = await supabase.rpc("join_match", { p_match: id });
     setBusy(false);
-    if (error) { Alert.alert("Couldn't join", error.message); return; }
+    if (error) { Alert.alert(t("game.couldntJoin"), error.message); return; }
     await load();
     if (data === "pending_payment") router.push({ pathname: "/match/[id]/checkout", params: { id } });
-    else if (data === "waitlist") Alert.alert("You're on the waitlist", "This game is full. We'll move you in automatically if a spot opens up.");
-    else if (data === "going" && direct) Alert.alert("You're in!", `Pay ${formatPrice(match!.price_cents, match!.currency)} to the organizer:\n\n${match!.payment_instructions}`);
+    else if (data === "waitlist") Alert.alert(t("game.waitlisted"), t("game.waitlistedBody"));
+    else if (data === "going" && direct) Alert.alert(t("game.youreIn"), t("game.payOrganizer", { price: formatPrice(match!.price_cents, match!.currency), instructions: match!.payment_instructions ?? "" }));
   };
 
   const leave = () => {
-    Alert.alert("Leave this game?", myRsvp?.status === "going" && match && match.price_cents > 0
-      ? (direct ? "If you've already paid, sort out a refund with the organizer." : "Refunds are handled by the host.")
-      : "Your spot will go to the next person on the waitlist.", [
-      { text: "Stay", style: "cancel" },
-      { text: "Leave", style: "destructive", onPress: async () => {
+    Alert.alert(t("game.leaveTitle"), myRsvp?.status === "going" && match && match.price_cents > 0
+      ? t(direct ? "game.leaveDirect" : "game.leaveRefundHost")
+      : t("game.leaveWaitlist"), [
+      { text: t("game.stay"), style: "cancel" },
+      { text: t("game.leave"), style: "destructive", onPress: async () => {
         const { error } = await supabase.rpc("leave_match", { p_match: id });
-        if (error) Alert.alert("Couldn't leave", error.message); else load();
+        if (error) Alert.alert(t("game.couldntLeave"), error.message); else load();
       } },
     ]);
   };
 
   const playerActions = (r: Rsvp) => {
     if (!canManage || r.user_id === match?.host_id) return;
-    const who = r.profiles?.display_name ?? "Player";
+    const who = r.profiles?.display_name ?? t("common.player");
     const rpc = async (fn: string, args: Record<string, unknown>) => {
       const { error } = await supabase.rpc(fn, { p_match: id, p_user: r.user_id, ...args });
-      if (error) Alert.alert("Something went wrong", error.message); else load();
+      if (error) Alert.alert(t("common.somethingWrong"), error.message); else load();
     };
     Alert.alert(who, undefined, [
       ...(direct ? [r.paid_at
-        ? { text: "Mark as not paid", onPress: () => rpc("set_player_paid", { p_paid: false }) }
-        : { text: "Mark as paid", onPress: () => rpc("set_player_paid", { p_paid: true }) }] : []),
-      { text: "Remove from game", style: "destructive" as const, onPress: () => Alert.alert(`Remove ${who}?`,
+        ? { text: t("game.markUnpaid"), onPress: () => rpc("set_player_paid", { p_paid: false }) }
+        : { text: t("game.markPaid"), onPress: () => rpc("set_player_paid", { p_paid: true }) }] : []),
+      { text: t("game.removeFromGame"), style: "destructive" as const, onPress: () => Alert.alert(t("game.removeTitle", { name: who }),
         match!.price_cents > 0 && r.paid_at
-          ? (direct ? "Their spot goes to the waitlist. Refund them yourself if needed." : "Their spot goes to the waitlist. Refund them from your Stripe dashboard.")
-          : "Their spot goes to the next person on the waitlist.", [
-        { text: "Keep", style: "cancel" },
-        { text: "Remove", style: "destructive", onPress: () => rpc("remove_player", {}) },
+          ? t(direct ? "game.removeDirect" : "game.removeStripe")
+          : t("game.removeFree"), [
+        { text: t("common.keep"), style: "cancel" },
+        { text: t("common.remove"), style: "destructive", onPress: () => rpc("remove_player", {}) },
       ]) },
-      { text: "Cancel", style: "cancel" as const },
+      { text: t("common.cancel"), style: "cancel" as const },
     ]);
   };
 
   const cancelMatch = () => {
-    Alert.alert("Cancel this game?", "Everyone who joined will see it as cancelled.", [
-      { text: "Keep it", style: "cancel" },
-      { text: "Cancel game", style: "destructive", onPress: async () => {
+    Alert.alert(t("game.cancelTitle"), t("game.cancelBody"), [
+      { text: t("common.keepIt"), style: "cancel" },
+      { text: t("game.cancelGame"), style: "destructive", onPress: async () => {
         const { error } = await supabase.from("matches").update({ status: "cancelled" }).eq("id", id);
-        if (error) Alert.alert("Couldn't cancel", error.message); else load();
+        if (error) Alert.alert(t("game.couldntCancel"), error.message); else load();
       } },
     ]);
   };
 
   const vote = async (pollId: string, optionId: string) => {
-    if (myRsvp?.status !== "going") { Alert.alert("Join first", "Only players who are going can vote."); return; }
+    if (myRsvp?.status !== "going") { Alert.alert(t("game.joinFirst"), t("game.joinFirstBody")); return; }
     const { error } = await supabase.from("votes").upsert({ poll_id: pollId, option_id: optionId, user_id: me });
-    if (error) Alert.alert("Couldn't vote", error.message); else load();
+    if (error) Alert.alert(t("game.couldntVote"), error.message); else load();
   };
 
   const openDirections = () => {
@@ -142,8 +143,8 @@ export default function MatchDetail() {
   const cta = useMemo(() => {
     if (!match || match.status !== "open" || isPast(match)) return null;
     if (isHost) return null;
-    if (!myRsvp) return { title: match.spots_left === 0 ? "Join waitlist" : match.price_cents > 0 ? `Join · ${formatPrice(match.price_cents, match.currency)}` : "Join game", onPress: join };
-    if (myRsvp.status === "pending_payment") return { title: "Complete payment", onPress: () => router.push({ pathname: "/match/[id]/checkout", params: { id } }) };
+    if (!myRsvp) return { title: match.spots_left === 0 ? t("game.joinWaitlist") : match.price_cents > 0 ? t("game.joinPaid", { price: formatPrice(match.price_cents, match.currency) }) : t("game.joinGame"), onPress: join };
+    if (myRsvp.status === "pending_payment") return { title: t("game.completePayment"), onPress: () => router.push({ pathname: "/match/[id]/checkout", params: { id } }) };
     return null;
   }, [match, myRsvp, isHost]);
 
@@ -157,18 +158,18 @@ export default function MatchDetail() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Stack.Screen options={{ title: "" }} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.md, paddingBottom: 140 }, column(widths.page)]}>
-        {cancelled && <View style={{ marginBottom: space.md }}><Chip label="This game was cancelled" tone="warn" icon="close-circle" /></View>}
-        {ended && !cancelled && <View style={{ marginBottom: space.md }}><Chip label="This game has been played" icon="time" /></View>}
-        <Text style={type.small}>{formatWhen(match.starts_at)} · {match.duration_min} min</Text>
+        {cancelled && <View style={{ marginBottom: space.md }}><Chip label={t("game.wasCancelled")} tone="warn" icon="close-circle" /></View>}
+        {ended && !cancelled && <View style={{ marginBottom: space.md }}><Chip label={t("game.wasPlayed")} icon="time" /></View>}
+        <Text style={type.small}>{formatWhen(match.starts_at)} · {t("common.minutes", { n: match.duration_min })}</Text>
         <Text style={[type.display, { fontSize: 30, marginTop: 4 }]}>{match.title}</Text>
         <Text style={[type.small, { marginTop: 4 }]}>
-          Hosted by {match.host_name}
+          {t("game.hostedBy", { name: match.host_name })}
           {match.group_id && match.group_name ? (
             <Text style={{ color: colors.accent, fontWeight: "700" }}
               onPress={() => router.push({ pathname: "/group/[id]", params: { id: match.group_id! } })}> · {match.group_name}</Text>
           ) : null}
         </Text>
-        {match.visibility === "group" && <View style={{ flexDirection: "row", marginTop: space.sm }}><Chip label="Group members only" icon="lock-closed" /></View>}
+        {match.visibility === "group" && <View style={{ flexDirection: "row", marginTop: space.sm }}><Chip label={t("game.groupOnly")} icon="lock-closed" /></View>}
 
         <Card style={{ marginTop: space.lg }}>
           <PlayerMeter going={match.going_count} min={match.min_players} max={match.max_players} />
@@ -178,7 +179,7 @@ export default function MatchDetail() {
           </View>
           {!match.is_confirmed && (
             <Text style={[type.small, { marginTop: space.sm }]}>
-              The game goes ahead once {match.min_players} players have joined.
+              {t("game.goesAhead", { count: match.min_players })}
             </Text>
           )}
         </Card>
@@ -186,14 +187,14 @@ export default function MatchDetail() {
         {direct && myRsvp?.status === "going" && !isHost && (
           <Card style={{ marginTop: space.md, borderColor: myRsvp.paid_at ? colors.border : colors.warning }}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Text style={type.label}>How to pay</Text>
-              <Chip label={myRsvp.paid_at ? "Paid" : "Payment due"} tone={myRsvp.paid_at ? "good" : "warn"}
+              <Text style={type.label}>{t("game.howToPay")}</Text>
+              <Chip label={t(myRsvp.paid_at ? "common.paid" : "common.paymentDue")} tone={myRsvp.paid_at ? "good" : "warn"}
                 icon={myRsvp.paid_at ? "checkmark-circle" : "time"} />
             </View>
             <Text style={[type.body, { marginTop: space.sm }]} selectable>{match.payment_instructions}</Text>
             {!myRsvp.paid_at && (
               <Text style={[type.small, { marginTop: space.sm }]}>
-                Pay {formatPrice(match.price_cents, match.currency)} to the organizer. They'll mark you as paid.
+                {t("game.payHint", { price: formatPrice(match.price_cents, match.currency) })}
               </Text>
             )}
           </Card>
@@ -218,7 +219,7 @@ export default function MatchDetail() {
           <Pressable onPress={() => router.push({ pathname: "/match/[id]/chat", params: { id } })}>
             <Card style={{ marginTop: space.md, flexDirection: "row", alignItems: "center" }}>
               <Ionicons name="chatbubbles" size={22} color={colors.accent} />
-              <Text style={[type.body, { flex: 1, marginLeft: space.sm }]}>Game chat</Text>
+              <Text style={[type.body, { flex: 1, marginLeft: space.sm }]}>{t("game.chat")}</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Card>
           </Pressable>
@@ -226,14 +227,14 @@ export default function MatchDetail() {
 
         {/* ── Votes ── */}
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: space.xl, marginBottom: space.sm }}>
-          <Text style={type.title}>Votes</Text>
+          <Text style={type.title}>{t("game.votes")}</Text>
           {(isHost || myRsvp?.status === "going") && open && (
             <Pressable onPress={() => router.push({ pathname: "/match/[id]/new-poll", params: { id } })} hitSlop={10}>
-              <Text style={{ color: colors.accent, fontWeight: "700" }}>+ New vote</Text>
+              <Text style={{ color: colors.accent, fontWeight: "700" }}>{t("game.newVote")}</Text>
             </Pressable>
           )}
         </View>
-        {polls.length === 0 && <Text style={type.small}>No votes yet. Ask the group to pick a time or a spot.</Text>}
+        {polls.length === 0 && <Text style={type.small}>{t("game.noVotes")}</Text>}
         {polls.map((poll) => {
           const total = poll.poll_options.reduce((s, o) => s + (tally[o.id] ?? 0), 0);
           const closed = poll.closes_at ? new Date(poll.closes_at) < new Date() : false;
@@ -242,7 +243,7 @@ export default function MatchDetail() {
             <Card key={poll.id} style={{ marginBottom: space.md }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: space.sm }}>
                 <Ionicons name={poll.kind === "time" ? "time-outline" : "location-outline"} size={16} color={colors.muted} />
-                <Text style={[type.label, { marginLeft: 6 }]}>{poll.kind === "time" ? "Time" : "Location"}{closed ? " · closed" : ""}</Text>
+                <Text style={[type.label, { marginLeft: 6 }]}>{t(poll.kind === "time" ? "game.voteTime" : "game.votePlace")}{closed ? t("game.voteClosed") : ""}</Text>
               </View>
               <Text style={[type.body, { fontWeight: "700", marginBottom: space.sm }]}>{poll.question}</Text>
               {poll.poll_options.map((o) => {
@@ -266,13 +267,13 @@ export default function MatchDetail() {
                   </Pressable>
                 );
               })}
-              <Text style={[type.small, { marginTop: space.sm }]}>{total} vote{total === 1 ? "" : "s"}</Text>
+              <Text style={[type.small, { marginTop: space.sm }]}>{t("game.voteCount", { count: total })}</Text>
             </Card>
           );
         })}
 
         {/* ── Roster ── */}
-        <Text style={[type.title, { marginTop: space.xl, marginBottom: space.sm }]}>Players ({going.length}/{match.max_players})</Text>
+        <Text style={[type.title, { marginTop: space.xl, marginBottom: space.sm }]}>{t("game.players", { going: going.length, max: match.max_players })}</Text>
         <Card>
           {going.map((r, i) => (
             <Pressable key={r.user_id} onPress={() => playerActions(r)} disabled={!canManage || r.user_id === match.host_id}
@@ -281,33 +282,33 @@ export default function MatchDetail() {
               <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceHi, alignItems: "center", justifyContent: "center" }}>
                 <Text style={{ color: colors.text, fontWeight: "700" }}>{(r.profiles?.display_name ?? "?").slice(0, 1).toUpperCase()}</Text>
               </View>
-              <Text style={[type.body, { marginLeft: 10, flex: 1 }]}>{r.profiles?.display_name ?? "Player"}{r.user_id === me ? " (you)" : ""}</Text>
-              {r.user_id === match.host_id && <Chip label="Host" tone="accent" />}
+              <Text style={[type.body, { marginLeft: 10, flex: 1 }]}>{r.profiles?.display_name ?? t("common.player")}{r.user_id === me ? ` ${t("common.you")}` : ""}</Text>
+              {r.user_id === match.host_id && <Chip label={t("game.host")} tone="accent" />}
               {direct && canManage && r.user_id !== match.host_id && (
-                <Chip label={r.paid_at ? "Paid" : "Unpaid"} tone={r.paid_at ? "good" : "warn"} />
+                <Chip label={t(r.paid_at ? "common.paid" : "common.unpaid")} tone={r.paid_at ? "good" : "warn"} />
               )}
               {canManage && r.user_id !== match.host_id && (
                 <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} style={{ marginLeft: 8 }} />
               )}
             </Pressable>
           ))}
-          {going.length === 0 && <Text style={type.small}>Nobody yet.</Text>}
+          {going.length === 0 && <Text style={type.small}>{t("game.nobody")}</Text>}
         </Card>
         {direct && canManage && (
           <Text style={[type.small, { marginTop: space.sm }]}>
-            {going.filter((r) => r.user_id !== match.host_id && !r.paid_at).length} unpaid · tap a player to mark them paid or remove them.
+            {t("game.unpaidHint", { count: going.filter((r) => r.user_id !== match.host_id && !r.paid_at).length })}
           </Text>
         )}
         {waitlist.length > 0 && (
           <Text style={[type.small, { marginTop: space.sm }]}>
-            Waitlist: {waitlist.map((r) => r.profiles?.display_name ?? "Player").join(", ")}
+            {t("game.waitlist", { names: waitlist.map((r) => r.profiles?.display_name ?? t("common.player")).join(", ") })}
           </Text>
         )}
 
         {/* ── Secondary actions ── */}
         <View style={{ marginTop: space.xl }}>
-          {myRsvp && !isHost && open && <Button title="Leave game" variant="danger" onPress={leave} />}
-          {canManage && open && <Button title="Cancel game" variant="danger" onPress={cancelMatch} />}
+          {myRsvp && !isHost && open && <Button title={t("game.leaveGame")} variant="danger" onPress={leave} />}
+          {canManage && open && <Button title={t("game.cancelGame")} variant="danger" onPress={cancelMatch} />}
         </View>
       </ScrollView>
 

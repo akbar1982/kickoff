@@ -8,6 +8,7 @@ import { useAuth } from "../../lib/auth";
 import { formatWhen } from "../../lib/hooks";
 import { colors, space, type } from "../../lib/theme";
 import { column, widths } from "../../lib/layout";
+import { t } from "../../lib/i18n";
 
 interface Room {
   key: string;
@@ -59,19 +60,19 @@ export default function Chats() {
     const last = new Map<string, Room["last"]>();
     for (const m of (recent ?? []) as any[]) {
       const key = m.match_id ?? m.group_id ?? "community";
-      if (!last.has(key)) last.set(key, { body: m.body, name: m.profiles?.display_name ?? "Player", at: m.created_at });
+      if (!last.has(key)) last.set(key, { body: m.body, name: m.profiles?.display_name ?? t("common.player"), at: m.created_at });
     }
 
     const groupRooms: Room[] = groups.map((g, i) => ({
-      key: g.id, section: i === 0 ? "Your groups" : undefined, groupId: g.id, title: g.name, last: last.get(g.id),
+      key: g.id, section: i === 0 ? t("chat.yourGroups") : undefined, groupId: g.id, title: g.name, last: last.get(g.id),
     }));
     const gameRooms: Room[] = list
       .sort((a, b) => +new Date(a.starts_at) - +new Date(b.starts_at))
       .map((g, i) => ({
-        key: g.id, section: i === 0 ? "Your games" : undefined, matchId: g.id, title: g.title,
+        key: g.id, section: i === 0 ? t("chat.yourGames") : undefined, matchId: g.id, title: g.title,
         startsAt: g.starts_at, cancelled: g.status === "cancelled", last: last.get(g.id),
       }));
-    setRooms([{ key: "community", title: "Community", last: last.get("community") }, ...groupRooms, ...gameRooms]);
+    setRooms([{ key: "community", title: t("chat.community"), last: last.get("community") }, ...groupRooms, ...gameRooms]);
   }, [me, role]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -102,11 +103,11 @@ export default function Chats() {
               <View style={{ flex: 1, marginLeft: space.md }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                   <Text style={[type.body, { fontWeight: "700", flexShrink: 1 }]} numberOfLines={1}>{item.title}</Text>
-                  {item.cancelled && <Chip label="Cancelled" tone="warn" />}
+                  {item.cancelled && <Chip label={t("common.cancelled")} tone="warn" />}
                 </View>
                 {item.startsAt && <Text style={type.small}>{formatWhen(item.startsAt)}</Text>}
                 <Text style={[type.small, { marginTop: 2 }]} numberOfLines={1}>
-                  {item.last ? `${item.last.name}: ${item.last.body}` : item.matchId || item.groupId ? "No messages yet" : "Chat with everyone in Kickoff"}
+                  {item.last ? `${item.last.name}: ${item.last.body}` : t(item.matchId || item.groupId ? "chat.noMessages" : "chat.communityHint")}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -116,7 +117,7 @@ export default function Chats() {
       )}
       ListFooterComponent={rooms.length === 1 ? (
         <Text style={[type.small, { marginTop: space.md, textAlign: "center" }]}>
-          Join a group or a game and its chat will show up here.
+          {t("chat.joinHint")}
         </Text>
       ) : undefined}
     />

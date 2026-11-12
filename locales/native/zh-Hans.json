@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Kickoff",
+    "NSLocationWhenInUseUsageDescription": "Kickoff 使用你的位置来显示附近的比赛。",
+    "NSCameraUsageDescription": "仅当你在付款时选择扫描银行卡，Kickoff 才会使用相机。"
+  }
+}

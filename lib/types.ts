@@ -91,6 +91,8 @@ export interface Group {
   name: string;
   description: string | null;
   created_by: string;
+  lat: number | null;
+  lng: number | null;
   member_count: number;
   pending_count: number;
   my_status: MemberStatus | null;

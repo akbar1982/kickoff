@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Kickoff",
+    "NSLocationWhenInUseUsageDescription": "Kickoff uses your location to show pickup games near you.",
+    "NSCameraUsageDescription": "Kickoff uses the camera only if you choose to scan a payment card at checkout."
+  }
+}

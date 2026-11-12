@@ -10,6 +10,8 @@ import { usePayouts } from "../../lib/payments";
 import { deleteAccount, openLegal } from "../../lib/safety";
 import { colors, space, type } from "../../lib/theme";
 import { column, widths } from "../../lib/layout";
+import { langChoice, languages, setLanguage, t } from "../../lib/i18n";
+import { showSheet } from "../../components/ActionSheet";
 
 interface Mine {
   match_id: string; status: string; paid_at: string | null;
@@ -17,11 +19,11 @@ interface Mine {
 }
 
 function chip(r: Mine): { label: string; tone: "good" | "warn" | "accent" } {
-  if (r.matches.status === "cancelled") return { label: "Cancelled", tone: "warn" };
-  if (r.status === "waitlist") return { label: "Waitlist", tone: "accent" };
-  if (r.status === "pending_payment") return { label: "Payment due", tone: "accent" };
+  if (r.matches.status === "cancelled") return { label: t("common.cancelled"), tone: "warn" };
+  if (r.status === "waitlist") return { label: t("profile.waitlist"), tone: "accent" };
+  if (r.status === "pending_payment") return { label: t("common.paymentDue"), tone: "accent" };
   const owesOrganizer = r.matches.price_cents > 0 && r.matches.payment_method === "direct" && !r.paid_at;
-  return owesOrganizer ? { label: "You're in · pay organizer", tone: "warn" } : { label: "You're in", tone: "good" };
+  return owesOrganizer ? { label: t("profile.inPayOrganizer"), tone: "warn" } : { label: t("profile.in"), tone: "good" };
 }
 
 export default function Profile() {
@@ -29,29 +31,37 @@ export default function Profile() {
   const router = useRouter();
   const [mine, setMine] = useState<Mine[]>([]);
   const payouts = usePayouts();
-  const tryIt = (fn: () => Promise<void>) => fn().catch((e) => Alert.alert("Payouts", e?.message ?? "Something went wrong."));
+  const tryIt = (fn: () => Promise<void>) => fn().catch((e) => Alert.alert(t("profile.payouts"), e?.message ?? t("common.somethingWrongDot")));
   const meta = session?.user.user_metadata ?? {};
   const [deleting, setDeleting] = useState(false);
 
   const confirmDelete = () => Alert.alert(
-    "Delete your account?",
-    "This permanently deletes your profile, messages, RSVPs and the games you host. Groups you organize pass to another member. This can't be undone.",
+    t("profile.deleteTitle"),
+    t("profile.deleteBody"),
     [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: async () => {
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.delete"), style: "destructive", onPress: async () => {
         setDeleting(true);
         try {
           await deleteAccount();
           await signOut();
         } catch (e: any) {
-          Alert.alert("Couldn't delete account", e?.message ?? "Please try again.");
+          Alert.alert(t("profile.deleteFailed"), e?.message ?? t("common.tryAgain"));
         } finally {
           setDeleting(false);
         }
       } },
     ],
   );
-  const name: string = meta.full_name ?? meta.name ?? session?.user.email ?? "Player";
+  // Phone language, or one picked here (remembered on this device).
+  const pickLanguage = () => showSheet({
+    title: t("profile.language"),
+    options: [
+      { label: t("profile.languageSystem"), onPress: () => setLanguage(null) },
+      ...languages.map((l) => ({ label: l.name, onPress: () => setLanguage(l.code) })),
+    ],
+  });
+  const name: string = meta.full_name ?? meta.name ?? session?.user.email ?? t("common.player");
 
   useFocusEffect(useCallback(() => {
     if (!session) return;
@@ -75,13 +85,13 @@ export default function Profile() {
         <Text style={type.small}>{session?.user.email}</Text>
         {role === "admin" && (
           <View style={{ marginTop: space.sm }}>
-            <Chip label="Admin" tone="accent" />
+            <Chip label={t("common.admin")} tone="accent" />
           </View>
         )}
       </View>
 
-      <Text style={[type.label, { marginBottom: space.sm }]}>Your upcoming games</Text>
-      {mine.length === 0 && <Text style={[type.small, { marginBottom: space.md }]}>You haven't joined any games yet.</Text>}
+      <Text style={[type.label, { marginBottom: space.sm }]}>{t("profile.upcoming")}</Text>
+      {mine.length === 0 && <Text style={[type.small, { marginBottom: space.md }]}>{t("profile.noGames")}</Text>}
       {mine.map((r) => (
         <Card key={r.match_id} style={{ marginBottom: space.sm }}>
           <Text style={type.small}>{formatWhen(r.matches.starts_at)}</Text>
@@ -93,31 +103,31 @@ export default function Profile() {
         </Card>
       ))}
 
-      <Text style={[type.label, { marginTop: space.lg, marginBottom: space.sm }]}>Payouts</Text>
+      <Text style={[type.label, { marginTop: space.lg, marginBottom: space.sm }]}>{t("profile.payouts")}</Text>
       <Card>
-        {!payouts.status ? <Text style={type.small}>Loading…</Text> : payouts.ready ? (
+        {!payouts.status ? <Text style={type.small}>{t("common.loading")}</Text> : payouts.ready ? (
           <>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Chip label="Payouts active" tone="good" icon="checkmark-circle" />
+              <Chip label={t("profile.payoutsActive")} tone="good" icon="checkmark-circle" />
             </View>
             <Text style={[type.small, { marginTop: space.sm }]}>
               {payouts.status.payouts_enabled
-                ? "Players' payments for games you host go to your Stripe account and are paid out to your bank or debit card."
-                : "You can post paid games. Add a bank account or debit card in Stripe so the money can be paid out to you."}
+                ? t("profile.payoutsEnabled")
+                : t("profile.payoutsNoBank")}
             </Text>
-            <Button title={payouts.status.payouts_enabled ? "View payouts" : "Add bank or debit card"} variant="secondary" icon="wallet"
+            <Button title={t(payouts.status.payouts_enabled ? "profile.viewPayouts" : "profile.addBank")} variant="secondary" icon="wallet"
               style={{ marginTop: space.md }}
               onPress={() => tryIt(payouts.status!.payouts_enabled ? payouts.openDashboard : payouts.setUp)} loading={payouts.busy} />
           </>
         ) : (
           <>
-            <Text style={type.body}>{payouts.status.details_submitted ? "Stripe is checking your details" : "Get paid for the games you host"}</Text>
+            <Text style={type.body}>{t(payouts.status.details_submitted ? "profile.stripeChecking" : "profile.getPaid")}</Text>
             <Text style={[type.small, { marginTop: 4 }]}>
               {payouts.status.details_submitted
-                ? "This usually takes a few minutes. If Stripe needs anything else, tap below to finish."
-                : "Set up payouts with Stripe to post paid games. Players' payments go straight to your bank account or debit card."}
+                ? t("profile.checkingBody")
+                : t("profile.getPaidBody")}
             </Text>
-            <Button title={payouts.status.details_submitted ? "Finish setup" : "Set up payouts"} icon="card"
+            <Button title={t(payouts.status.details_submitted ? "profile.finishSetup" : "profile.setUpPayouts")} icon="card"
               style={{ marginTop: space.md }} onPress={() => tryIt(payouts.setUp)} loading={payouts.busy} />
           </>
         )}
@@ -125,36 +135,38 @@ export default function Profile() {
 
       {role === "admin" && (
         <>
-          <Text style={[type.label, { marginTop: space.xl, marginBottom: space.sm }]}>Admin</Text>
+          <Text style={[type.label, { marginTop: space.xl, marginBottom: space.sm }]}>{t("profile.admin")}</Text>
           <View style={{ gap: space.sm }}>
-            <Button title="Reports" icon="flag" variant="secondary" onPress={() => router.push("/reports")} />
-            <Button title="Manage users" icon="people" variant="secondary" onPress={() => router.push("/admin")} />
+            <Button title={t("profile.reports")} icon="flag" variant="secondary" onPress={() => router.push("/reports")} />
+            <Button title={t("profile.manageUsers")} icon="people" variant="secondary" onPress={() => router.push("/admin")} />
           </View>
         </>
       )}
 
-      <Text style={[type.label, { marginTop: space.xl, marginBottom: space.sm }]}>Account</Text>
+      <Text style={[type.label, { marginTop: space.xl, marginBottom: space.sm }]}>{t("profile.account")}</Text>
       <Card style={{ paddingVertical: 0 }}>
         {([
-          ["Blocked users", "ban", () => router.push("/blocked")],
-          ["Help & support", "help-circle", () => openLegal("support")],
-          ["Terms of Use", "document-text", () => openLegal("terms")],
-          ["Privacy Policy", "lock-closed", () => openLegal("privacy")],
-        ] as const).map(([label, icon, onPress], i) => (
+          [t("profile.language"), "language", pickLanguage, languages.find((l) => l.code === langChoice())?.name ?? t("profile.languageSystem")],
+          [t("profile.blocked"), "ban", () => router.push("/blocked")],
+          [t("profile.help"), "help-circle", () => openLegal("support")],
+          [t("profile.terms"), "document-text", () => openLegal("terms")],
+          [t("profile.privacy"), "lock-closed", () => openLegal("privacy")],
+        ] as const).map(([label, icon, onPress, value], i) => (
           <Pressable key={label} onPress={onPress} style={({ pressed }) => ({
             flexDirection: "row", alignItems: "center", paddingVertical: 14, opacity: pressed ? 0.6 : 1,
             borderTopWidth: i ? 1 : 0, borderTopColor: colors.border })}>
             <Ionicons name={icon} size={20} color={colors.muted} />
             <Text style={[type.body, { flex: 1, marginLeft: space.md }]}>{label}</Text>
+            {value ? <Text style={[type.small, { marginRight: 6 }]}>{value}</Text> : null}
             <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </Pressable>
         ))}
       </Card>
 
       <View style={{ marginTop: space.md, gap: space.sm }}>
-        <Button title="Sign out" variant="secondary" onPress={() =>
-          Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", onPress: signOut }])} />
-        <Button title="Delete account" variant="danger" loading={deleting} onPress={confirmDelete} />
+        <Button title={t("profile.signOut")} variant="secondary" onPress={() =>
+          Alert.alert(t("profile.signOutTitle"), undefined, [{ text: t("common.cancel"), style: "cancel" }, { text: t("profile.signOut"), onPress: signOut }])} />
+        <Button title={t("profile.deleteAccount")} variant="danger" loading={deleting} onPress={confirmDelete} />
       </View>
         </ScrollView>
   );

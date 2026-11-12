@@ -8,6 +8,7 @@ import { useAuth } from "../../../lib/auth";
 import { colors, radius, space, type } from "../../../lib/theme";
 import { column, widths } from "../../../lib/layout";
 import type { GroupMember } from "../../../lib/types";
+import { t } from "../../../lib/i18n";
 
 export default function GroupMembers() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,7 +23,7 @@ export default function GroupMembers() {
       supabase.from("group_members").select("user_id,role,status,profiles(display_name)").eq("group_id", id).order("created_at"),
       supabase.from("profiles").select("id,display_name").order("display_name"),
     ]);
-    if (m.error) { Alert.alert("Couldn't load members", m.error.message); return; }
+    if (m.error) { Alert.alert(t("members.loadFailed"), m.error.message); return; }
     setMembers(m.data as unknown as GroupMember[]);
     setEveryone(p.data ?? []);
   }, [id]);
@@ -43,19 +44,19 @@ export default function GroupMembers() {
 
   const rpc = async (fn: string, args: Record<string, unknown>) => {
     const { error } = await supabase.rpc(fn, args);
-    if (error) Alert.alert("Something went wrong", error.message); else load();
+    if (error) Alert.alert(t("common.somethingWrong"), error.message); else load();
   };
-  const name = (m: GroupMember) => m.profiles?.display_name ?? "Player";
+  const name = (m: GroupMember) => m.profiles?.display_name ?? t("common.player");
 
   const memberActions = (m: GroupMember) => {
     if (!organizer || m.user_id === me) return;
     const promote = m.role === "organizer"
-      ? { text: "Make participant", onPress: () => rpc("set_group_role", { p_group: id, p_user: m.user_id, p_role: "participant" }) }
-      : { text: "Make organizer", onPress: () => rpc("set_group_role", { p_group: id, p_user: m.user_id, p_role: "organizer" }) };
+      ? { text: t("members.makeParticipant"), onPress: () => rpc("set_group_role", { p_group: id, p_user: m.user_id, p_role: "participant" }) }
+      : { text: t("members.makeOrganizer"), onPress: () => rpc("set_group_role", { p_group: id, p_user: m.user_id, p_role: "organizer" }) };
     Alert.alert(name(m), undefined, [
       promote,
-      { text: "Remove from group", style: "destructive", onPress: () => rpc("remove_from_group", { p_group: id, p_user: m.user_id }) },
-      { text: "Cancel", style: "cancel" },
+      { text: t("members.removeFromGroup"), style: "destructive", onPress: () => rpc("remove_from_group", { p_group: id, p_user: m.user_id }) },
+      { text: t("common.cancel"), style: "cancel" },
     ]);
   };
 
@@ -64,24 +65,24 @@ export default function GroupMembers() {
       keyboardShouldPersistTaps="handled">
       {organizer && (
         <>
-          <Text style={[type.label, { marginBottom: space.sm }]}>Invite players</Text>
-          <TextInput value={query} onChangeText={setQuery} placeholder="Search by name" placeholderTextColor={colors.muted}
+          <Text style={[type.label, { marginBottom: space.sm }]}>{t("members.invitePlayers")}</Text>
+          <TextInput value={query} onChangeText={setQuery} placeholder={t("common.searchByName")} placeholderTextColor={colors.muted}
             style={{ height: 48, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
               color: colors.text, paddingHorizontal: space.md, fontSize: 16 }} />
           {candidates.map((p) => (
             <Card key={p.id} style={{ flexDirection: "row", alignItems: "center", marginTop: space.sm }}>
               <Text style={[type.body, { flex: 1 }]}>{p.display_name}</Text>
               <Pressable hitSlop={8} onPress={() => { setQuery(""); rpc("invite_to_group", { p_group: id, p_user: p.id }); }}>
-                <Text style={{ color: colors.accent, fontWeight: "700" }}>Invite</Text>
+                <Text style={{ color: colors.accent, fontWeight: "700" }}>{t("members.invite")}</Text>
               </Pressable>
             </Card>
           ))}
-          {query.trim() !== "" && candidates.length === 0 && <Text style={[type.small, { marginTop: space.sm }]}>No one else matches.</Text>}
+          {query.trim() !== "" && candidates.length === 0 && <Text style={[type.small, { marginTop: space.sm }]}>{t("members.noMatch")}</Text>}
         </>
       )}
 
       {organizer && requests.length > 0 && (
-        <Section title={`Requests to join (${requests.length})`}>
+        <Section title={t("members.requests", { count: requests.length })}>
           {requests.map((m, i) => (
             <Line key={m.user_id} first={i === 0} label={name(m)}>
               <Pressable hitSlop={8} onPress={() => rpc("review_join_request", { p_group: id, p_user: m.user_id, p_approve: false })}>
@@ -96,24 +97,24 @@ export default function GroupMembers() {
         </Section>
       )}
 
-      <Section title={`Members (${active.length})`}>
+      <Section title={t("members.members", { count: active.length })}>
         {active.map((m, i) => (
           <Pressable key={m.user_id} onPress={() => memberActions(m)} disabled={!organizer || m.user_id === me}>
-            <Line first={i === 0} label={`${name(m)}${m.user_id === me ? " (you)" : ""}`}>
-              {m.role === "organizer" && <Chip label="Organizer" tone="accent" />}
+            <Line first={i === 0} label={`${name(m)}${m.user_id === me ? ` ${t("common.you")}` : ""}`}>
+              {m.role === "organizer" && <Chip label={t("common.organizer")} tone="accent" />}
               {organizer && m.user_id !== me && <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} style={{ marginLeft: 8 }} />}
             </Line>
           </Pressable>
         ))}
       </Section>
-      {organizer && <Text style={[type.small, { marginTop: space.sm }]}>Tap a member to make them an organizer or remove them.</Text>}
+      {organizer && <Text style={[type.small, { marginTop: space.sm }]}>{t("members.tapHint")}</Text>}
 
       {organizer && invited.length > 0 && (
-        <Section title={`Invited (${invited.length})`}>
+        <Section title={t("members.invited", { count: invited.length })}>
           {invited.map((m, i) => (
             <Line key={m.user_id} first={i === 0} label={name(m)}>
               <Pressable hitSlop={8} onPress={() => rpc("remove_from_group", { p_group: id, p_user: m.user_id })}>
-                <Text style={{ color: colors.muted, fontWeight: "700" }}>Cancel</Text>
+                <Text style={{ color: colors.muted, fontWeight: "700" }}>{t("common.cancel")}</Text>
               </Pressable>
             </Line>
           ))}

@@ -8,6 +8,7 @@ import { deleteAccount } from "../lib/safety";
 import { formatWhen } from "../lib/hooks";
 import { colors, space, type } from "../lib/theme";
 import { column, widths } from "../lib/layout";
+import { t } from "../lib/i18n";
 
 interface Report {
   id: string; reason: string; message_id: string | null; message_body: string | null;
@@ -16,9 +17,8 @@ interface Report {
   reported: { display_name: string } | null;
 }
 
-const REASON_LABEL: Record<string, string> = {
-  harassment: "Harassment", hate: "Hate speech", sexual: "Sexual / violent", spam: "Spam", other: "Other",
-};
+const REASONS = ["harassment", "hate", "sexual", "spam", "other"];
+const reasonLabel = (reason: string) => REASONS.includes(reason) ? t(`reports.${reason as "other"}`) : reason;
 
 /** Admins work through open reports: delete the message, remove the user, or dismiss. */
 export default function Reports() {
@@ -32,7 +32,7 @@ export default function Reports() {
         reporter:profiles!reports_reporter_id_fkey(display_name),
         reported:profiles!reports_reported_user_id_fkey(display_name)`)
       .eq("status", "open").order("created_at");
-    if (error) Alert.alert("Couldn't load reports", error.message);
+    if (error) Alert.alert(t("reports.loadFailed"), error.message);
     setReports((data ?? []) as unknown as Report[]);
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -40,7 +40,7 @@ export default function Reports() {
   // Resolves this report and any other open reports it settles (same message, or same user when removed).
   const resolve = async (ids: string[]) => {
     const { error } = await supabase.from("reports").update({ status: "resolved" }).in("id", ids);
-    if (error) Alert.alert("Couldn't update report", error.message);
+    if (error) Alert.alert(t("reports.updateFailed"), error.message);
     setReports((prev) => prev?.filter((r) => !ids.includes(r.id)) ?? null);
   };
 
@@ -50,7 +50,7 @@ export default function Reports() {
       await action();
       await resolve((reports ?? []).filter(settles).map((x) => x.id));
     } catch (e: any) {
-      Alert.alert("Couldn't do that", e?.message ?? "Please try again.");
+      Alert.alert(t("reports.actionFailed"), e?.message ?? t("common.tryAgain"));
     } finally {
       setBusy(null);
     }
@@ -62,11 +62,11 @@ export default function Reports() {
   }, (x) => x.id === r.id || (!!r.message_id && x.message_id === r.message_id));
 
   const removeUser = (r: Report) => Alert.alert(
-    `Remove ${r.reported?.display_name ?? "this user"}?`,
-    "Their account, messages and hosted games are deleted permanently.",
+    t("reports.removeTitle", { name: r.reported?.display_name ?? t("reports.thisUser") }),
+    t("reports.removeBody"),
     [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive",
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.remove"), style: "destructive",
         onPress: () => act(r, async () => { await deleteAccount(r.reported_user_id); },
           (x) => x.reported_user_id === r.reported_user_id) },
     ],
@@ -75,7 +75,7 @@ export default function Reports() {
   if (role !== "admin") {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
-        <Text style={type.small}>Only admins can review reports.</Text>
+        <Text style={type.small}>{t("reports.onlyAdmins")}</Text>
       </View>
     );
   }
@@ -89,32 +89,32 @@ export default function Reports() {
       onRefresh={load}
       refreshing={false}
       ListEmptyComponent={reports ? (
-        <Text style={[type.small, { textAlign: "center", marginTop: space.xl }]}>No open reports. 🎉</Text>
+        <Text style={[type.small, { textAlign: "center", marginTop: space.xl }]}>{t("reports.empty")}</Text>
       ) : undefined}
       renderItem={({ item: r }) => (
         <Card style={{ marginBottom: space.sm }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Chip label={REASON_LABEL[r.reason] ?? r.reason} tone="warn" />
+            <Chip label={reasonLabel(r.reason)} tone="warn" />
             <Text style={type.small}>{formatWhen(r.created_at)}</Text>
           </View>
           <Text style={[type.body, { marginTop: space.sm }]}>
-            <Text style={{ fontWeight: "700" }}>{r.reported?.display_name ?? "Deleted user"}</Text>
-            <Text style={{ color: colors.muted }}> reported by {r.reporter?.display_name ?? "a deleted user"}</Text>
+            <Text style={{ fontWeight: "700" }}>{r.reported?.display_name ?? t("reports.deletedUser")}</Text>
+            <Text style={{ color: colors.muted }}>{t("reports.reportedBy", { name: r.reporter?.display_name ?? t("reports.aDeletedUser") })}</Text>
           </Text>
           {r.message_body != null && (
             <View style={{ backgroundColor: colors.surfaceHi, borderRadius: 12, padding: space.sm + 4, marginTop: space.sm }}>
               <Text style={type.body}>{r.message_body}</Text>
-              {!r.message_id && <Text style={[type.small, { marginTop: 4 }]}>Message already deleted</Text>}
+              {!r.message_id && <Text style={[type.small, { marginTop: 4 }]}>{t("reports.messageDeleted")}</Text>}
             </View>
           )}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginTop: space.md }}>
             {r.message_id && (
-              <Button title="Delete message" variant="danger" style={{ height: 40 }} disabled={busy === r.id}
+              <Button title={t("reports.deleteMessage")} variant="danger" style={{ height: 40 }} disabled={busy === r.id}
                 onPress={() => deleteMessage(r)} />
             )}
-            <Button title="Remove user" variant="danger" style={{ height: 40 }} disabled={busy === r.id}
+            <Button title={t("reports.removeUser")} variant="danger" style={{ height: 40 }} disabled={busy === r.id}
               onPress={() => removeUser(r)} />
-            <Button title="Dismiss" variant="secondary" style={{ height: 40 }} disabled={busy === r.id}
+            <Button title={t("reports.dismiss")} variant="secondary" style={{ height: 40 }} disabled={busy === r.id}
               onPress={() => act(r, async () => {}, (x) => x.id === r.id)} />
           </View>
         </Card>

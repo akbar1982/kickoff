@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Kickoff",
+    "NSLocationWhenInUseUsageDescription": "Kickoff yaqin atrofdagi oʻyinlarni koʻrsatish uchun joylashuvingizdan foydalanadi.",
+    "NSCameraUsageDescription": "Kickoff kameradan faqat toʻlov paytida kartani skanerlashni tanlasangiz foydalanadi."
+  }
+}

@@ -5,6 +5,7 @@ import { Button, Field, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { colors, space, type } from "../../lib/theme";
 import { column, useLayout, widths } from "../../lib/layout";
+import { t } from "../../lib/i18n";
 
 export default function SignUp() {
   const { wide } = useLayout();
@@ -18,9 +19,9 @@ export default function SignUp() {
 
   const submit = async () => {
     const e: Record<string, string> = {};
-    if (name.trim().length < 2) e.name = "Enter your name";
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) e.email = "Enter a valid email";
-    if (password.length < 8) e.password = "Use at least 8 characters";
+    if (name.trim().length < 2) e.name = t("signUp.errName");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) e.email = t("signUp.errEmail");
+    if (password.length < 8) e.password = t("signUp.errPassword");
     setErrors(e);
     if (Object.keys(e).length) return;
 
@@ -28,12 +29,12 @@ export default function SignUp() {
     try {
       const { needsConfirmation } = await signUpWithEmail(name, email, password);
       if (needsConfirmation) {
-        Alert.alert("Check your inbox", "We sent a confirmation link. Open it, then sign in.", [
-          { text: "OK", onPress: () => router.replace("/(auth)/sign-in") },
+        Alert.alert(t("signUp.checkInbox"), t("signUp.checkInboxBody"), [
+          { text: t("common.ok"), onPress: () => router.replace("/(auth)/sign-in") },
         ]);
       }
     } catch (err: any) {
-      Alert.alert("Couldn't create account", err?.message ?? "Please try again.");
+      Alert.alert(t("signUp.failed"), err?.message ?? t("common.tryAgain"));
     } finally { setBusy(false); }
   };
 
@@ -43,18 +44,18 @@ export default function SignUp() {
         {/* on iPad the form sits centred on the screen; on phones it starts at the top */}
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.lg, flexGrow: 1, justifyContent: wide ? "center" : "flex-start" }, column(widths.form)]}
           keyboardShouldPersistTaps="handled">
-          <Text style={type.display}>Join the squad</Text>
+          <Text style={type.display}>{t("signUp.title")}</Text>
           <Text style={[type.body, { color: colors.muted, marginBottom: space.xl, marginTop: space.sm }]}>
-            Create your account in under a minute.
+            {t("signUp.subtitle")}
           </Text>
-          <Field label="Name" value={name} onChangeText={setName} error={errors.name}
-            autoComplete="name" placeholder="Alex Morgan" />
-          <Field label="Email" value={email} onChangeText={setEmail} error={errors.email} autoCapitalize="none"
-            keyboardType="email-address" autoComplete="email" placeholder="you@example.com" />
-          <Field label="Password" value={password} onChangeText={setPassword} error={errors.password}
-            secureTextEntry autoComplete="new-password" placeholder="At least 8 characters" />
-          <Button title="Create account" onPress={submit} loading={busy} style={{ marginTop: space.sm }} />
-          <Button title="Already registered? Sign in" variant="ghost" onPress={() => router.replace("/(auth)/sign-in")} />
+          <Field label={t("common.name")} value={name} onChangeText={setName} error={errors.name}
+            autoComplete="name" placeholder={t("signUp.namePlaceholder")} />
+          <Field label={t("common.email")} value={email} onChangeText={setEmail} error={errors.email} autoCapitalize="none"
+            keyboardType="email-address" autoComplete="email" placeholder={t("common.emailPlaceholder")} />
+          <Field label={t("common.password")} value={password} onChangeText={setPassword} error={errors.password}
+            secureTextEntry autoComplete="new-password" placeholder={t("signUp.passwordPlaceholder")} />
+          <Button title={t("signUp.button")} onPress={submit} loading={busy} style={{ marginTop: space.sm }} />
+          <Button title={t("signUp.toSignIn")} variant="ghost" onPress={() => router.replace("/(auth)/sign-in")} />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

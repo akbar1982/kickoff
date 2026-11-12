@@ -3,9 +3,10 @@ import { Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Card, Chip, PlayerMeter } from "./ui";
-import { formatPrice, formatWhen, headcountLabel, isPast } from "../lib/hooks";
+import { formatDistance, formatPrice, formatWhen, headcountLabel, isPast } from "../lib/hooks";
 import { colors, space, type } from "../lib/theme";
 import type { Match } from "../lib/types";
+import { t } from "../lib/i18n";
 
 /** `fill` stretches the card to its grid cell, so cards in one row line up. */
 export function MatchCard({ match, distanceKm, fill }: { match: Match; distanceKm?: number; fill?: boolean }) {
@@ -27,7 +28,7 @@ export function MatchCard({ match, distanceKm, fill }: { match: Match; distanceK
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: space.sm }}>
           <Ionicons name="location-outline" size={15} color={colors.muted} />
           <Text style={[type.small, { marginLeft: 4, flex: 1 }]} numberOfLines={1}>
-            {match.venue_name}{distanceKm !== undefined ? ` · ${distanceKm < 10 ? distanceKm.toFixed(1) : Math.round(distanceKm)} km` : ""}
+            {match.venue_name}{distanceKm !== undefined ? ` · ${formatDistance(distanceKm)}` : ""}
           </Text>
         </View>
 
@@ -36,10 +37,10 @@ export function MatchCard({ match, distanceKm, fill }: { match: Match; distanceK
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: space.md }}>
           {past
-            ? <Chip label={`Played · ${match.going_count} player${match.going_count === 1 ? "" : "s"}`} icon="time" />
+            ? <Chip label={t("match.played", { count: match.going_count })} icon="time" />
             : <Chip label={head.text} tone={head.tone} icon={match.is_confirmed ? "checkmark-circle" : "people"} />}
           {match.group_name && <Chip label={match.group_name} icon="shield" />}
-          {match.visibility === "group" && <Chip label="Members only" icon="lock-closed" />}
+          {match.visibility === "group" && <Chip label={t("match.membersOnly")} icon="lock-closed" />}
         </View>
       </Card>
     </Pressable>

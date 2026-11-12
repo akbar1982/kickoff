@@ -3,6 +3,7 @@ import { Platform, Pressable, Text, View } from "react-native";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, space, type } from "../lib/theme";
+import { localeTag } from "../lib/i18n";
 
 export function DateTimeField({ label, value, onChange }: { label: string; value: Date; onChange: (d: Date) => void }) {
   const [showIos, setShowIos] = useState(false);
@@ -26,7 +27,7 @@ export function DateTimeField({ label, value, onChange }: { label: string; value
     });
   };
 
-  const text = `${value.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${value.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+  const text = `${value.toLocaleDateString(localeTag(), { weekday: "short", month: "short", day: "numeric" })} · ${value.toLocaleTimeString(localeTag(), { hour: "numeric", minute: "2-digit" })}`;
 
   return (
     <View style={{ marginBottom: space.md }}>
@@ -41,7 +42,7 @@ export function DateTimeField({ label, value, onChange }: { label: string; value
         <Text style={[type.body, { marginLeft: space.sm, fontSize: 16 }]}>{text}</Text>
       </Pressable>
       {Platform.OS === "ios" && showIos && (
-        <DateTimePicker value={value} mode="datetime" display="inline" themeVariant="dark" accentColor={colors.accent}
+        <DateTimePicker value={value} mode="datetime" display="inline" themeVariant="dark" accentColor={colors.accent} locale={localeTag()}
           minimumDate={new Date()} onChange={(_e, d) => d && onChange(d)} />
       )}
     </View>

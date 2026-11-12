@@ -9,6 +9,7 @@ import { useAuth } from "../../lib/auth";
 import { openLegal } from "../../lib/safety";
 import { colors, space, type } from "../../lib/theme";
 import { useLayout } from "../../lib/layout";
+import { t } from "../../lib/i18n";
 
 export default function Welcome() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function Welcome() {
     if (busy) return;
     setBusy(p);
     try { await (p === "apple" ? signInWithApple() : signInWithProvider(p)); }
-    catch (e: any) { Alert.alert("Sign-in failed", e?.message ?? "Please try again."); }
+    catch (e: any) { Alert.alert(t("welcome.signInFailed"), e?.message ?? t("common.tryAgain")); }
     finally { setBusy(null); }
   };
 
@@ -41,7 +42,7 @@ export default function Welcome() {
       <Text style={[type.display, wide && { fontSize: 48, letterSpacing: -1.2 }]}>Kickoff</Text>
       <Text style={[type.body, { color: colors.muted, marginTop: space.sm, fontSize: wide ? 21 : 18, lineHeight: wide ? 30 : 26 },
         wide && !landscape && { textAlign: "center", maxWidth: 460 }]}>
-        Find pickup soccer nearby. Set the time, lock the squad, play.
+        {t("welcome.tagline")}
       </Text>
     </View>
   );
@@ -54,20 +55,21 @@ export default function Welcome() {
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
           cornerRadius={27} style={{ height: 54 }} onPress={() => social("apple")} />
       )}
-      <Button title="Continue with Google" icon="logo-google" variant="secondary"
+      <Button title={t("welcome.google")} icon="logo-google" variant="secondary"
         loading={busy === "google"} onPress={() => social("google")} />
       <View style={{ flexDirection: "row", alignItems: "center", marginVertical: space.sm }}>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        <Text style={[type.small, { marginHorizontal: space.md }]}>or</Text>
+        <Text style={[type.small, { marginHorizontal: space.md }]}>{t("welcome.or")}</Text>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
       </View>
-      <Button title="Create account with email" onPress={() => router.push("/(auth)/sign-up")} />
-      <Button title="I already have an account" variant="ghost" onPress={() => router.push("/(auth)/sign-in")} />
+      <Button title={t("welcome.createEmail")} onPress={() => router.push("/(auth)/sign-up")} />
+      <Button title={t("welcome.haveAccount")} variant="ghost" onPress={() => router.push("/(auth)/sign-in")} />
       <Text style={[type.small, { textAlign: "center", fontSize: 12 }]}>
-        By continuing, you agree to our{" "}
-        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("terms")}>Terms</Text>
-        {" "}and{" "}
-        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("privacy")}>Privacy Policy</Text>.
+        {t("welcome.agreeStart")}
+        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("terms")}>{t("welcome.terms")}</Text>
+        {t("welcome.and")}
+        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("privacy")}>{t("welcome.privacy")}</Text>
+        {t("welcome.agreeEnd")}
       </Text>
     </View>
   );
