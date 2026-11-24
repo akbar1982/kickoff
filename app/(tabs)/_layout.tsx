@@ -21,6 +21,7 @@ export default function TabsLayout() {
       tabBarActiveTintColor: colors.accent,
       tabBarInactiveTintColor: colors.muted,
       tabBarLabelStyle: { fontWeight: "600", fontSize: 11 },
+      tabBarAllowFontScaling: false,   // five labels don't fit under the icons at large text sizes
       sceneStyle: { backgroundColor: colors.bg },
     }}>
       <Tabs.Screen name="index" options={{

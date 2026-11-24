@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Platform, Text, View } from "react-native";
+import { Alert, Platform, Pressable, Text, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Screen } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { openLegal } from "../../lib/safety";
-import { colors, space, type } from "../../lib/theme";
+import { colors, scheme, space, type } from "../../lib/theme";
 import { useLayout } from "../../lib/layout";
 import { t } from "../../lib/i18n";
 
@@ -18,12 +18,18 @@ export default function Welcome() {
   const { signInWithProvider, signInWithApple } = useAuth();
   const [busy, setBusy] = useState<"apple" | "google" | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const [agreed, setAgreed] = useState(false);   // the Terms must be accepted before any sign-in or sign-up
   useEffect(() => {
     if (Platform.OS === "ios") AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
   }, []);
 
+  const needsAgreement = () => {
+    if (!agreed) Alert.alert(t("welcome.agreeTitle"), t("welcome.agreeFirst"));
+    return !agreed;
+  };
+
   const social = async (p: "apple" | "google") => {
-    if (busy) return;
+    if (busy || needsAgreement()) return;
     setBusy(p);
     try { await (p === "apple" ? signInWithApple() : signInWithProvider(p)); }
     catch (e: any) { Alert.alert(t("welcome.signInFailed"), e?.message ?? t("common.tryAgain")); }
@@ -49,10 +55,21 @@ export default function Welcome() {
 
   const actions = (
     <View style={{ gap: space.sm + 4 }}>
+      <Pressable onPress={() => setAgreed(!agreed)} accessibilityRole="checkbox" accessibilityState={{ checked: agreed }}
+        style={{ flexDirection: "row", alignItems: "flex-start", gap: space.sm, marginBottom: space.xs }}>
+        <Ionicons name={agreed ? "checkbox" : "square-outline"} size={22} color={agreed ? colors.accent : colors.muted} />
+        <Text style={[type.small, { flex: 1 }]}>
+          {t("welcome.agreeStart")}
+          <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("terms")}>{t("welcome.terms")}</Text>
+          {t("welcome.and")}
+          <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("privacy")}>{t("welcome.privacy")}</Text>
+          {t("welcome.agreeEnd")}
+        </Text>
+      </Pressable>
       {appleAvailable && (
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+          buttonStyle={scheme() === "light" ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
           cornerRadius={27} style={{ height: 54 }} onPress={() => social("apple")} />
       )}
       <Button title={t("welcome.google")} icon="logo-google" variant="secondary"
@@ -62,15 +79,8 @@ export default function Welcome() {
         <Text style={[type.small, { marginHorizontal: space.md }]}>{t("welcome.or")}</Text>
         <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
       </View>
-      <Button title={t("welcome.createEmail")} onPress={() => router.push("/(auth)/sign-up")} />
-      <Button title={t("welcome.haveAccount")} variant="ghost" onPress={() => router.push("/(auth)/sign-in")} />
-      <Text style={[type.small, { textAlign: "center", fontSize: 12 }]}>
-        {t("welcome.agreeStart")}
-        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("terms")}>{t("welcome.terms")}</Text>
-        {t("welcome.and")}
-        <Text style={{ color: colors.text, textDecorationLine: "underline" }} onPress={() => openLegal("privacy")}>{t("welcome.privacy")}</Text>
-        {t("welcome.agreeEnd")}
-      </Text>
+      <Button title={t("welcome.createEmail")} onPress={() => { if (!needsAgreement()) router.push("/(auth)/sign-up"); }} />
+      <Button title={t("welcome.haveAccount")} variant="ghost" onPress={() => { if (!needsAgreement()) router.push("/(auth)/sign-in"); }} />
     </View>
   );
 

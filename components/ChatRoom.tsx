@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Chip } from "./ui";
 import { showSheet } from "./ActionSheet";
 import { block, report } from "../lib/safety";
+import { clean, isObjectionable } from "../lib/moderation";
 import { freshChannel, supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import { setOpenChat } from "../lib/notifications";
 import { colors, radius, space, type } from "../lib/theme";
 import { column, widths } from "../lib/layout";
 import type { ChatMessage } from "../lib/types";
@@ -50,9 +53,14 @@ export function ChatRoom({ matchId = null, groupId = null }: { matchId?: string 
     return () => { supabase.removeChannel(ch); };
   }, [matchId, groupId, load]);
 
+  // while this chat is on screen its notifications stay quiet (same urls as supabase/009_push.sql)
+  const url = matchId ? `/match/${matchId}/chat` : groupId ? `/group/${groupId}/chat` : null;
+  useFocusEffect(useCallback(() => { setOpenChat(url); return () => setOpenChat(null); }, [url]));
+
   const send = async () => {
     const body = draft.trim();
     if (!body || !me) return;
+    if (isObjectionable(body)) { Alert.alert(t("safety.notAllowedTitle"), t("safety.notAllowed")); return; }
     setSending(true);
     const { data, error } = await supabase.from("chat_messages")
       .insert({ match_id: matchId, group_id: groupId, user_id: me, body }).select(COLUMNS).single();
@@ -79,7 +87,7 @@ export function ChatRoom({ matchId = null, groupId = null }: { matchId?: string 
         ...(mine ? [] : [
           { label: t("chat.reportMessage"), onPress: () => report({ userId: m.user_id, messageId: m.id }) },
           { label: t("chat.block", { name }), destructive: true, onPress: async () => {
-            if (await block({ id: m.user_id, name })) setMessages((prev) => prev.filter((x) => x.user_id !== m.user_id));
+            if (await block({ id: m.user_id, name }, m.id)) setMessages((prev) => prev.filter((x) => x.user_id !== m.user_id));
           } },
         ]),
       ],
@@ -113,8 +121,8 @@ export function ChatRoom({ matchId = null, groupId = null }: { matchId?: string 
                 backgroundColor: mine ? colors.accent : colors.surfaceHi, borderRadius: radius.md,
                 paddingHorizontal: 14, paddingVertical: 10,
               }}>
-                <Text style={{ color: mine ? colors.accentInk : colors.text, fontSize: 15 }}>{item.body}</Text>
-                <Text style={{ color: mine ? "rgba(11,15,13,0.55)" : colors.muted, fontSize: 11, marginTop: 4, alignSelf: "flex-end" }}>
+                <Text style={{ color: mine ? colors.accentInk : colors.text, fontSize: 15 }}>{clean(item.body)}</Text>
+                <Text style={{ color: mine ? colors.accentInk : colors.muted, opacity: mine ? 0.6 : 1, fontSize: 11, marginTop: 4, alignSelf: "flex-end" }}>
                   {new Date(item.created_at).toLocaleTimeString(localeTag(), { hour: "numeric", minute: "2-digit" })}
                 </Text>
               </View>

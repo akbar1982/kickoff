@@ -1,21 +1,23 @@
 import "react-native-url-polyfill/auto";
 import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { DarkTheme, Stack, ThemeProvider, useRouter, useSegments } from "expo-router";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActionSheetHost } from "../components/ActionSheet";
 import { AuthProvider, useAuth } from "../lib/auth";
-import { colors } from "../lib/theme";
+import { usePushNotifications } from "../lib/notifications";
+import { colors, scheme } from "../lib/theme";
+import { AppearanceProvider } from "../lib/appearance";
 import { LanguageProvider, t } from "../lib/i18n";
 
-// dark navigator background, so the space beside the content column on iPad matches the app
-const navTheme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: colors.bg, card: colors.bg, text: colors.text, border: colors.border, primary: colors.accent },
-};
+// navigator colors from the app palette, so the space beside the content column on iPad matches the app
+function navTheme() {
+  const base = scheme() === "light" ? DefaultTheme : DarkTheme;
+  return { ...base, colors: { ...base.colors, background: colors.bg, card: colors.bg, text: colors.text, border: colors.border, primary: colors.accent } };
+}
 
 // routes that only close themselves; see app/auth-callback.tsx
 const returnLinks: string[] = ["auth-callback", "payouts-return"];
@@ -32,7 +34,7 @@ function Gate() {
     else if (session && inAuth) router.replace("/(tabs)");
   }, [session, loading, segments]);
 
-
+  usePushNotifications(session?.user.id);
 
   if (loading) {
     return (
@@ -65,11 +67,23 @@ function Gate() {
       <Stack.Screen name="admin" options={{ title: t("nav.users") }} />
       <Stack.Screen name="reports" options={{ title: t("nav.reports") }} />
       <Stack.Screen name="blocked" options={{ title: t("nav.blocked") }} />
+      <Stack.Screen name="notifications" options={{ title: t("nav.notifications") }} />
       <Stack.Screen name="match/[id]/new-poll" options={{ title: t("nav.newVote"), presentation: "modal" }} />
       <Stack.Screen name="auth-callback" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="payouts-return" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="pick-location" options={{ title: t("nav.chooseLocation"), presentation: "modal" }} />
     </Stack>
+  );
+}
+
+// rendered inside AppearanceProvider, so it reads the palette after the theme is applied
+function Themed() {
+  return (
+    <ThemeProvider value={navTheme()}>
+      <StatusBar style={scheme() === "light" ? "dark" : "light"} />
+      <Gate />
+      <ActionSheetHost />
+    </ThemeProvider>
   );
 }
 
@@ -84,11 +98,9 @@ export default function RootLayout() {
         >
           <AuthProvider>
             <LanguageProvider>
-              <ThemeProvider value={navTheme}>
-                <StatusBar style="light" />
-                <Gate />
-                <ActionSheetHost />
-              </ThemeProvider>
+              <AppearanceProvider>
+                <Themed />
+              </AppearanceProvider>
             </LanguageProvider>
           </AuthProvider>
         </StripeProvider>

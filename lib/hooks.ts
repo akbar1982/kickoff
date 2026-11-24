@@ -5,6 +5,7 @@ import { getLocales } from "expo-localization";
 import { freshChannel, supabase } from "./supabase";
 import type { Match } from "./types";
 import { localeTag, t } from "./i18n";
+import { blockedIds, onBlock } from "./safety";
 
 export type Coords = { lat: number; lng: number };
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -93,14 +94,17 @@ export function useMatches() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("match_overview")
-      .select("*")
-      .eq("status", "open")
-      .gte("starts_at", new Date(Date.now() - 30 * DAY_MS).toISOString())
-      .order("starts_at", { ascending: true });
+    const [{ data, error }, blocked] = await Promise.all([
+      supabase
+        .from("match_overview")
+        .select("*")
+        .eq("status", "open")
+        .gte("starts_at", new Date(Date.now() - 30 * DAY_MS).toISOString())
+        .order("starts_at", { ascending: true }),
+      blockedIds(),
+    ]);
     if (error) setError(error.message);
-    else { setMatches(data as Match[]); setError(null); }
+    else { setMatches((data as Match[]).filter((m) => !blocked.has(m.host_id))); setError(null); }
     setLoading(false);
   }, []);
 
@@ -110,7 +114,8 @@ export function useMatches() {
     const ch = freshChannel("rsvps-feed")
       .on("postgres_changes", { event: "*", schema: "public", table: "rsvps" }, load)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const off = onBlock(load);
+    return () => { supabase.removeChannel(ch); off(); };
   }, [load]);
 
   return { matches, loading, error, reload: load };

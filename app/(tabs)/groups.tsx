@@ -61,7 +61,7 @@ export default function Groups() {
           style={{ marginBottom: space.md }} />
       }
       renderSectionHeader={({ section }) => (
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: space.md, marginBottom: space.sm }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: space.sm, marginTop: space.md, marginBottom: space.sm }}>
           <Text style={type.label}>{section.title}</Text>
           {section.key === "discover" && granted && <RadiusButton />}
         </View>
@@ -84,11 +84,14 @@ export default function Groups() {
                   {t("common.members", { count: item.member_count })}
                   {!item.my_status && away(item) !== undefined ? ` · ${formatDistance(away(item)!)}` : ""}
                 </Text>
+                {/* under the name, so a long translation never squeezes the group's name out */}
+                {item.my_group_role === "organizer" && item.my_status === "active" && (
+                  <View style={{ flexDirection: "row", marginTop: 6 }}>
+                    <Chip label={item.pending_count ? t("groups.requests", { count: item.pending_count }) : t("common.organizer")}
+                      tone={item.pending_count ? "warn" : "accent"} />
+                  </View>
+                )}
               </View>
-              {item.my_group_role === "organizer" && item.my_status === "active" && (
-                <Chip label={item.pending_count ? t("groups.requests", { count: item.pending_count }) : t("common.organizer")}
-                  tone={item.pending_count ? "warn" : "accent"} />
-              )}
               {item.my_status !== "invited" && <Ionicons name="chevron-forward" size={18} color={colors.muted} style={{ marginLeft: 6 }} />}
             </View>
             {item.my_status === "invited" && (

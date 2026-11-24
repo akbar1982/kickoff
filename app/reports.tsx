@@ -103,8 +103,9 @@ export default function Reports() {
           </Text>
           {r.message_body != null && (
             <View style={{ backgroundColor: colors.surfaceHi, borderRadius: 12, padding: space.sm + 4, marginTop: space.sm }}>
-              <Text style={type.body}>{r.message_body}</Text>
-              {!r.message_id && <Text style={[type.small, { marginTop: 4 }]}>{t("reports.messageDeleted")}</Text>}
+              {/* "[blocked]" when someone blocked them, "[Game] …" / "[Group] …" for reported games and groups */}
+              <Text style={type.body}>{r.message_body === "[blocked]" ? t("reports.blocked") : r.message_body}</Text>
+              {!r.message_id && !r.message_body.startsWith("[") && <Text style={[type.small, { marginTop: 4 }]}>{t("reports.messageDeleted")}</Text>}
             </View>
           )}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.sm, marginTop: space.md }}>

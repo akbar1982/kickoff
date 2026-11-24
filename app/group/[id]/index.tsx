@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Card, Chip } from "../../../components/ui";
@@ -11,6 +11,8 @@ import { colors, space, type } from "../../../lib/theme";
 import { column, widths } from "../../../lib/layout";
 import type { Group, Match } from "../../../lib/types";
 import { t } from "../../../lib/i18n";
+import { report } from "../../../lib/safety";
+import { showSheet } from "../../../components/ActionSheet";
 
 export default function GroupDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,16 +22,27 @@ export default function GroupDetail() {
   const [group, setGroup] = useState<Group | null>(null);
   const [games, setGames] = useState<Match[]>([]);
   const [busy, setBusy] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [g, m] = await Promise.all([
-      supabase.from("group_overview").select("*").eq("id", id).single(),
+    // on a stalled connection, give up after 15 s and offer Retry instead of a blank screen
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 15000);
+    setLoadError(null);
+    const [g, m, mute] = await Promise.all([
+      supabase.from("group_overview").select("*").eq("id", id).abortSignal(abort.signal).single(),
       supabase.from("match_overview").select("*").eq("group_id", id).eq("status", "open")
-        .gte("starts_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order("starts_at"),
+        .gte("starts_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order("starts_at")
+        .abortSignal(abort.signal),
+      supabase.from("group_mutes").select("group_id").eq("group_id", id).abortSignal(abort.signal).maybeSingle(),
     ]);
-    if (g.error) { Alert.alert(t("group.loadFailed"), g.error.message); return; }
+    clearTimeout(timer);
+    // a server error has a code and a useful message; a timeout or dropped connection doesn't
+    if (g.error) { setLoadError(g.error.code ? g.error.message : t("common.tryAgain")); return; }
     setGroup(g.data as Group);
     setGames((m.data ?? []) as Match[]);
+    setMuted(!!mute.data);
   }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -38,6 +51,14 @@ export default function GroupDetail() {
     const { error } = await fn();
     setBusy(false);
     if (error) Alert.alert(t("common.somethingWrong"), error.message); else load();
+  };
+
+  // a muted group sends no notifications: no new games, no chat
+  const toggleMute = async () => {
+    const { error } = muted
+      ? await supabase.from("group_mutes").delete().eq("group_id", id)
+      : await supabase.from("group_mutes").insert({ group_id: id, user_id: me });
+    if (error) Alert.alert(t("common.somethingWrong"), error.message); else setMuted(!muted);
   };
 
   const requestToJoin = () => run(() => supabase.rpc("request_to_join", { p_group: id }));
@@ -54,7 +75,17 @@ export default function GroupDetail() {
     } },
   ]);
 
-  if (!group) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  if (!group) return (
+    <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", padding: space.lg }}>
+      {loadError === null ? <ActivityIndicator color={colors.accent} /> : (
+        <>
+          <Text style={[type.title, { textAlign: "center" }]}>{t("group.loadFailed")}</Text>
+          <Text style={[type.small, { textAlign: "center", marginTop: space.sm }]}>{loadError}</Text>
+          <Button title={t("common.retry")} icon="refresh" onPress={load} style={{ marginTop: space.lg, alignSelf: "stretch" }} />
+        </>
+      )}
+    </View>
+  );
   const member = group.my_status === "active";
   const organizer = member && group.my_group_role === "organizer";
   const admin = role === "admin";
@@ -62,7 +93,16 @@ export default function GroupDetail() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={[{ padding: space.md, paddingBottom: space.xl }, column(widths.page)]}>
-      <Stack.Screen options={{ title: "" }} />
+      <Stack.Screen options={{ title: "", headerRight: organizer || !group.created_by ? undefined : () => (
+        <Pressable hitSlop={12} accessibilityLabel={t("safety.more")} onPress={() => showSheet({
+          title: group.name,
+          options: [
+            { label: t("safety.reportGroup"), onPress: () => report({ userId: group.created_by, about: `[Group] ${group.name}${group.description ? ` · ${group.description}` : ""}` }) },
+          ],
+        })}>
+          <Ionicons name="ellipsis-horizontal-circle" size={26} color={colors.text} />
+        </Pressable>
+      ) }} />
       <Text style={type.display}>{group.name}</Text>
       <View style={{ flexDirection: "row", gap: 8, marginTop: space.sm }}>
         <Chip label={t("common.members", { count: group.member_count })} icon="people" />
@@ -97,6 +137,8 @@ export default function GroupDetail() {
           <Row icon="people" label={t(organizer ? "group.membersInvites" : "group.members")}
             badge={organizer && group.pending_count ? t("group.waiting", { count: group.pending_count }) : undefined}
             onPress={() => router.push({ pathname: "/group/[id]/members", params: { id } })} />
+          {member && <Row icon={muted ? "notifications-off" : "notifications"} label={t(muted ? "group.unmute" : "group.mute")}
+            onPress={toggleMute} />}
         </View>
       )}
 

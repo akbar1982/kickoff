@@ -47,7 +47,7 @@ export default function Feed() {
             onRefresh={async () => { setRefreshing(true); await reload(); setRefreshing(false); }} />
         }
         ListHeaderComponent={
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: space.md }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: space.sm, marginBottom: space.md }}>
             <Text style={type.small}>{t(granted ? "feed.near" : "feed.enableLocation")}</Text>
             {granted && <RadiusButton />}
           </View>

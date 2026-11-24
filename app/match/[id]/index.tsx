@@ -10,6 +10,8 @@ import { colors, radius, space, type } from "../../../lib/theme";
 import { column, widths } from "../../../lib/layout";
 import type { Match, Poll, Rsvp } from "../../../lib/types";
 import { t } from "../../../lib/i18n";
+import { block, report } from "../../../lib/safety";
+import { showSheet } from "../../../components/ActionSheet";
 
 export default function MatchDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -144,7 +146,8 @@ export default function MatchDetail() {
     if (!match || match.status !== "open" || isPast(match)) return null;
     if (isHost) return null;
     if (!myRsvp) return { title: match.spots_left === 0 ? t("game.joinWaitlist") : match.price_cents > 0 ? t("game.joinPaid", { price: formatPrice(match.price_cents, match.currency) }) : t("game.joinGame"), onPress: join };
-    if (myRsvp.status === "pending_payment") return { title: t("game.completePayment"), onPress: () => router.push({ pathname: "/match/[id]/checkout", params: { id } }) };
+    // through join_match, which renews the 15 minute hold if it ran out, then opens checkout
+    if (myRsvp.status === "pending_payment") return { title: t("game.completePayment"), onPress: join };
     return null;
   }, [match, myRsvp, isHost]);
 
@@ -156,7 +159,19 @@ export default function MatchDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Stack.Screen options={{ title: "" }} />
+      <Stack.Screen options={{ title: "", headerRight: isHost ? undefined : () => (
+        <Pressable hitSlop={12} accessibilityLabel={t("safety.more")} onPress={() => showSheet({
+          title: match.title,
+          options: [
+            { label: t("safety.reportGame"), onPress: () => report({ userId: match.host_id, about: `[Game] ${match.title}${match.description ? ` · ${match.description}` : ""}` }) },
+            { label: t("chat.block", { name: match.host_name }), destructive: true, onPress: async () => {
+              if (await block({ id: match.host_id, name: match.host_name })) router.back();
+            } },
+          ],
+        })}>
+          <Ionicons name="ellipsis-horizontal-circle" size={26} color={colors.text} />
+        </Pressable>
+      ) }} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[{ padding: space.md, paddingBottom: 140 }, column(widths.page)]}>
         {cancelled && <View style={{ marginBottom: space.md }}><Chip label={t("game.wasCancelled")} tone="warn" icon="close-circle" /></View>}
         {ended && !cancelled && <View style={{ marginBottom: space.md }}><Chip label={t("game.wasPlayed")} icon="time" /></View>}
@@ -186,7 +201,7 @@ export default function MatchDetail() {
 
         {direct && myRsvp?.status === "going" && !isHost && (
           <Card style={{ marginTop: space.md, borderColor: myRsvp.paid_at ? colors.border : colors.warning }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: space.sm }}>
               <Text style={type.label}>{t("game.howToPay")}</Text>
               <Chip label={t(myRsvp.paid_at ? "common.paid" : "common.paymentDue")} tone={myRsvp.paid_at ? "good" : "warn"}
                 icon={myRsvp.paid_at ? "checkmark-circle" : "time"} />
@@ -226,7 +241,7 @@ export default function MatchDetail() {
         )}
 
         {/* ── Votes ── */}
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: space.xl, marginBottom: space.sm }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: space.sm, marginTop: space.xl, marginBottom: space.sm }}>
           <Text style={type.title}>{t("game.votes")}</Text>
           {(isHost || myRsvp?.status === "going") && open && (
             <Pressable onPress={() => router.push({ pathname: "/match/[id]/new-poll", params: { id } })} hitSlop={10}>
@@ -258,7 +273,7 @@ export default function MatchDetail() {
                       borderColor: mine ? colors.accent : colors.border, backgroundColor: colors.surfaceHi,
                     }}>
                     <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${pct}%`,
-                      backgroundColor: leading ? "rgba(198,244,50,0.22)" : "rgba(255,255,255,0.06)" }} />
+                      backgroundColor: leading ? "rgba(198,244,50,0.22)" : colors.surfaceHi }} />
                     <View style={{ flexDirection: "row", alignItems: "center", padding: 14 }}>
                       <Ionicons name={mine ? "radio-button-on" : "radio-button-off"} size={18} color={mine ? colors.accent : colors.muted} />
                       <Text style={[type.body, { flex: 1, marginLeft: 10 }]} numberOfLines={2}>{o.label}</Text>
@@ -282,7 +297,7 @@ export default function MatchDetail() {
               <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceHi, alignItems: "center", justifyContent: "center" }}>
                 <Text style={{ color: colors.text, fontWeight: "700" }}>{(r.profiles?.display_name ?? "?").slice(0, 1).toUpperCase()}</Text>
               </View>
-              <Text style={[type.body, { marginLeft: 10, flex: 1 }]}>{r.profiles?.display_name ?? t("common.player")}{r.user_id === me ? ` ${t("common.you")}` : ""}</Text>
+              <Text style={[type.body, { marginLeft: 10, flex: 1, minWidth: "40%" }]}>{r.profiles?.display_name ?? t("common.player")}{r.user_id === me ? ` ${t("common.you")}` : ""}</Text>
               {r.user_id === match.host_id && <Chip label={t("game.host")} tone="accent" />}
               {direct && canManage && r.user_id !== match.host_id && (
                 <Chip label={t(r.paid_at ? "common.paid" : "common.unpaid")} tone={r.paid_at ? "good" : "warn"} />

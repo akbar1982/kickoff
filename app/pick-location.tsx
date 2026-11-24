@@ -7,7 +7,7 @@ import { Button, Screen } from "../components/ui";
 import { useUserLocation } from "../lib/hooks";
 import { describePin, searchPlaces } from "../lib/places";
 import { locationPicker } from "../lib/pickerStore";
-import { colors, radius, space, type } from "../lib/theme";
+import { colors, radius, scheme, space, themed, type } from "../lib/theme";
 import { column, widths } from "../lib/layout";
 import type { Place } from "../lib/types";
 import { t } from "../lib/i18n";
@@ -62,35 +62,35 @@ export default function PickLocation() {
         initialRegion={{ latitude: coords.lat, longitude: coords.lng, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
         showsUserLocation
         onRegionChangeComplete={onRegionDone}
-        userInterfaceStyle="dark"
+        userInterfaceStyle={scheme()}
       />
 
       {/* fixed centre pin: the map moves under it */}
-      <View pointerEvents="none" style={styles.pinWrap}>
+      <View pointerEvents="none" style={styles().pinWrap}>
         <Ionicons name="location-sharp" size={44} color={colors.accent} style={{ marginBottom: 22 }} />
       </View>
 
-      <View style={styles.searchWrap}>
-        <View style={styles.searchBox}>
+      <View style={styles().searchWrap}>
+        <View style={styles().searchBox}>
           <Ionicons name="search" size={18} color={colors.muted} />
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder={t("pick.search")}
             placeholderTextColor={colors.muted}
-            style={styles.searchInput}
+            style={styles().searchInput}
             returnKeyType="search"
           />
           {searching && <Text style={type.small}>…</Text>}
         </View>
         {results.length > 0 && (
           <FlatList showsVerticalScrollIndicator={false}
-            style={styles.results}
+            style={styles().results}
             keyboardShouldPersistTaps="handled"
             data={results}
             keyExtractor={(p) => p.id}
             renderItem={({ item }) => (
-              <Pressable style={styles.row} onPress={() => pickResult(item)}>
+              <Pressable style={styles().row} onPress={() => pickResult(item)}>
                 <Ionicons name="football-outline" size={18} color={colors.accent} />
                 <View style={{ flex: 1, marginLeft: space.sm }}>
                   <Text style={type.body} numberOfLines={1}>{item.name}</Text>
@@ -102,14 +102,14 @@ export default function PickLocation() {
         )}
       </View>
 
-      <View style={styles.footer}>
+      <View style={styles().footer}>
         <Button title={t("pick.use")} onPress={usePin} style={column(widths.form)} />
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => StyleSheet.create({
   pinWrap: { ...(StyleSheet.absoluteFill as object), alignItems: "center", justifyContent: "center" },
   searchWrap: { position: "absolute", top: space.md, left: space.md, right: space.md, alignItems: "center" },
   searchBox: {
@@ -123,4 +123,4 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: "row", alignItems: "center", padding: space.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   footer: { position: "absolute", bottom: space.lg, left: space.md, right: space.md },
-});
+}));

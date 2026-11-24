@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { Button, Field } from "../../components/ui";
@@ -8,6 +8,7 @@ import { useUserLocation } from "../../lib/hooks";
 import { colors, space, type } from "../../lib/theme";
 import { column, widths } from "../../lib/layout";
 import { t } from "../../lib/i18n";
+import { isObjectionable } from "../../lib/moderation";
 
 export default function NewGroup() {
   const router = useRouter();
@@ -17,10 +18,13 @@ export default function NewGroup() {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);   // a quick double tap lands before `busy` disables the button
 
   const create = async () => {
     if (name.trim().length < 3) { setError(t("newGroup.errName")); return; }
-    if (!session) return;
+    if (isObjectionable(name) || isObjectionable(description)) { setError(t("safety.notAllowed")); return; }
+    if (!session || submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     const { data, error } = await supabase.from("groups")
       .insert({ name: name.trim(), description: description.trim() || null, created_by: session.user.id,
@@ -28,6 +32,7 @@ export default function NewGroup() {
         ...(granted && { lat: +coords.lat.toFixed(2), lng: +coords.lng.toFixed(2) }) })
       .select("id").single();
     setBusy(false);
+    submitting.current = false;
     if (error) { Alert.alert(t("newGroup.failed"), error.message); return; }
     router.replace({ pathname: "/group/[id]", params: { id: data.id } });
   };

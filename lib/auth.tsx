@@ -5,6 +5,7 @@ import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { unregisterPush } from "./notifications";
 import type { Role } from "./types";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    await unregisterPush().catch(() => {});   // this phone stops getting their notifications
     await supabase.auth.signOut();
   };
 

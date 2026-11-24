@@ -11,6 +11,7 @@ import { deleteAccount, openLegal } from "../../lib/safety";
 import { colors, space, type } from "../../lib/theme";
 import { column, widths } from "../../lib/layout";
 import { langChoice, languages, setLanguage, t } from "../../lib/i18n";
+import { appearanceChoice, setAppearance } from "../../lib/appearance";
 import { showSheet } from "../../components/ActionSheet";
 
 interface Mine {
@@ -61,6 +62,16 @@ export default function Profile() {
       ...languages.map((l) => ({ label: l.name, onPress: () => setLanguage(l.code) })),
     ],
   });
+  // Phone setting, or light / dark picked here (remembered on this device).
+  const pickAppearance = () => showSheet({
+    title: t("profile.appearance"),
+    options: [
+      { label: t("profile.appearanceSystem"), onPress: () => setAppearance(null) },
+      { label: t("profile.appearanceLight"), onPress: () => setAppearance("light") },
+      { label: t("profile.appearanceDark"), onPress: () => setAppearance("dark") },
+    ],
+  });
+  const appearance = appearanceChoice();
   const name: string = meta.full_name ?? meta.name ?? session?.user.email ?? t("common.player");
 
   useFocusEffect(useCallback(() => {
@@ -147,6 +158,9 @@ export default function Profile() {
       <Card style={{ paddingVertical: 0 }}>
         {([
           [t("profile.language"), "language", pickLanguage, languages.find((l) => l.code === langChoice())?.name ?? t("profile.languageSystem")],
+          [t("profile.appearance"), "contrast", pickAppearance,
+            t(appearance === "light" ? "profile.appearanceLight" : appearance === "dark" ? "profile.appearanceDark" : "profile.appearanceSystem")],
+          [t("profile.notifications"), "notifications", () => router.push("/notifications")],
           [t("profile.blocked"), "ban", () => router.push("/blocked")],
           [t("profile.help"), "help-circle", () => openLegal("support")],
           [t("profile.terms"), "document-text", () => openLegal("terms")],

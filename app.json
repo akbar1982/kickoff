@@ -3,10 +3,10 @@
     "name": "Kickoff",
     "slug": "kickoff",
     "scheme": "kickoff",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#0B0F0D",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -50,6 +50,7 @@
       [
         "expo-localization",
         {
+          "supportsRTL": false,
           "supportedLocales": {
             "ios": [
               "en",
@@ -71,6 +72,13 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#C6F432"
+        }
+      ],
       "expo-apple-authentication",
       [
         "expo-location",
@@ -101,7 +109,8 @@
           }
         }
       ],
-      "./plugins/withoutReleaseLint"
+      "./plugins/withoutReleaseLint",
+      "./plugins/withOptionalPortrait"
     ],
     "experiments": {
       "typedRoutes": true

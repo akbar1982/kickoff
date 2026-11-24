@@ -14,6 +14,7 @@ import { colors, space, type } from "../lib/theme";
 import { column, widths } from "../lib/layout";
 import type { Group, Place } from "../lib/types";
 import { t } from "../lib/i18n";
+import { isObjectionable } from "../lib/moderation";
 
 const MIN_ALLOWED = 2;
 const MAX_ALLOWED = 60;
@@ -76,6 +77,7 @@ export default function CreateMatch() {
   const submit = async () => {
     const e: Record<string, string> = {};
     if (title.trim().length < 3) e.title = t("create.errTitle");
+    else if (isObjectionable(title) || isObjectionable(description) || isObjectionable(instructions)) e.title = t("safety.notAllowed");
     if (!groupId) e.group = t("create.errGroup");
     if (!place) e.place = t("create.errPlace");
     if (startsAt.getTime() < Date.now() + 5 * 60_000) e.when = t("create.errWhen");
